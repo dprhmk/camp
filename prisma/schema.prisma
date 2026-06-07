@@ -1,0 +1,185 @@
+// Prisma schema for the camp management app.
+//
+// Local development uses SQLite for zero-setup reliability.
+// For production, switch `provider` to "postgresql" and point DATABASE_URL
+// at a managed Postgres (e.g. Neon). No model changes are required.
+//
+// Note: SQLite does not support Prisma `enum`. All enum-like fields are stored
+// as `String` and validated/typed at the application layer via Zod
+// (see src/lib/validation). The allowed values live in src/lib/enums.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Accounts & roles
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  // Role: "SUPER_ADMIN" | "DIRECTOR" | "LEADER"
+  role         String   @default("LEADER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Squads this user leads (a leader is bound to a squad per season).
+  ledSquads Squad[] @relation("SquadLeader")
+}
+
+// ---------------------------------------------------------------------------
+// Camp — the root entity. Everything below is scoped by campId.
+// ---------------------------------------------------------------------------
+
+model Camp {
+  id          String    @id @default(cuid())
+  name        String
+  year        Int
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  squads         Squad[]
+  members        Member[]
+  scheduleEntries ScheduleEntry[]
+}
+
+// ---------------------------------------------------------------------------
+// Squad — a team within a camp.
+// ---------------------------------------------------------------------------
+
+model Squad {
+  id            String   @id @default(cuid())
+  campId        String
+  name          String
+  color         String   @default("#3b82f6")
+  // Account of the leader (optional — a squad may exist before a leader logs in).
+  leaderUserId  String?
+  // Display names (denormalised for quick contact lists / printing).
+  leaderName    String?
+  assistantName String?
+  // Cached aggregates, recomputed whenever a member is saved or moved.
+  totalPhysical Float    @default(0)
+  totalMental   Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  camp       Camp     @relation(fields: [campId], references: [id], onDelete: Cascade)
+  leaderUser User?    @relation("SquadLeader", fields: [leaderUserId], references: [id], onDelete: SetNull)
+  members    Member[]
+
+  @@index([campId])
+  @@index([leaderUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Member — a child within a camp. Holds the single large profile (~70 fields),
+// grouped only for UI convenience (no access restriction per group).
+// ---------------------------------------------------------------------------
+
+model Member {
+  id      String  @id @default(cuid())
+  campId  String
+  squadId String?
+  // Short unique code (per camp) used for QR lookup.
+  code    String
+
+  isLeader          Boolean @default(false)
+  isProfileComplete Boolean @default(false)
+
+  // Computed scores (see src/lib/scoring). Recomputed on every save.
+  physicalScore Float @default(0)
+  mentalScore   Float @default(0)
+
+  // --- Basic ---------------------------------------------------------------
+  lastName      String
+  firstName     String
+  middleName    String?
+  dateOfBirth   DateTime?
+  gender        String?   // "MALE" | "FEMALE"
+  residenceType String?   // "BUILDING" | "TENT" | "HOME"
+  photoUrl      String?
+
+  // --- Contacts ------------------------------------------------------------
+  childPhone        String?
+  guardianName      String?
+  parentsPhone      String?
+  additionalContact String?
+  instagram         String?
+  telegram          String?
+  otherSocial       String?
+  address           String?
+
+  // --- Physical ------------------------------------------------------------
+  height     Int?
+  build      String? // "SLIM" | "AVERAGE" | "ATHLETIC" | "HEAVY"
+  doesSports Boolean @default(false)
+  sportType  String?
+  agility    Int?    // 1..3
+  strength   Int?    // 1..3
+
+  // --- Medical -------------------------------------------------------------
+  allergies            String?
+  medicalRestrictions  String?
+  physicalRestrictions String?
+  medicalNotes         String?
+
+  // --- Psychological -------------------------------------------------------
+  firstTimeAtCamp Boolean @default(false)
+  isExceptional   Boolean @default(false)
+  panicAttacks    Boolean @default(false)
+  personalityType String? // "EXTROVERT" | "INTROVERT" | "AMBIVERT"
+
+  // --- Creative ------------------------------------------------------------
+  drawing     Int?    // 1..3
+  isMusician  Boolean @default(false)
+  instruments String?
+  poetry      Int?    // 1..3
+
+  // --- Intellect -----------------------------------------------------------
+  englishLevel Int? // 1..3
+  generalLevel Int? // 1..3
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  camp  Camp   @relation(fields: [campId], references: [id], onDelete: Cascade)
+  squad Squad? @relation(fields: [squadId], references: [id], onDelete: SetNull)
+
+  @@unique([campId, code])
+  @@index([campId])
+  @@index([squadId])
+}
+
+// ---------------------------------------------------------------------------
+// ScheduleEntry — day/week schedule within a camp.
+// A day is a set of time slots; the week view groups entries by date.
+// ---------------------------------------------------------------------------
+
+model ScheduleEntry {
+  id          String   @id @default(cuid())
+  campId      String
+  date        DateTime // the day this entry belongs to (time part ignored)
+  startTime   String   // "HH:mm"
+  endTime     String?  // "HH:mm"
+  title       String
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  camp Camp @relation(fields: [campId], references: [id], onDelete: Cascade)
+
+  @@index([campId, date])
+}

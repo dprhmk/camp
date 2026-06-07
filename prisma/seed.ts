@@ -1,0 +1,198 @@
+/**
+ * Seed script: creates demo accounts, a camp, squads, members and a schedule.
+ * Run with `npm run db:seed`. Safe to re-run — it resets demo data first.
+ */
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { computeScores } from "../src/lib/scoring/score";
+import { isProfileComplete, generateCode } from "../src/lib/member-utils";
+import { SQUAD_COLORS } from "../src/lib/enums";
+
+const prisma = new PrismaClient();
+
+const GENDERS = ["MALE", "FEMALE"];
+const RESIDENCE = ["BUILDING", "TENT", "HOME"];
+const BUILD = ["SLIM", "AVERAGE", "ATHLETIC", "HEAVY"];
+const PERSONALITY = ["EXTROVERT", "INTROVERT", "AMBIVERT"];
+const SPORTS = ["Футбол", "Волейбол", "Плавання", "Біг", ""];
+const LAST = ["Шевченко", "Коваленко", "Бондаренко", "Ткаченко", "Кравчук", "Мельник", "Поліщук", "Савченко", "Руденко", "Левченко"];
+const MALE_NAMES = ["Андрій", "Богдан", "Іван", "Максим", "Назар", "Олег", "Петро", "Тарас"];
+const FEMALE_NAMES = ["Анна", "Дарина", "Катерина", "Марія", "Олена", "Софія", "Юлія", "Ярина"];
+
+// Deterministic pseudo-random so the demo data is stable across runs.
+let seed = 42;
+function rnd() {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return seed / 0x7fffffff;
+}
+const pick = <T>(arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
+const scale = () => 1 + Math.floor(rnd() * 3);
+const chance = (p: number) => rnd() < p;
+
+async function main() {
+  console.log("Seeding…");
+
+  // Reset (demo only).
+  await prisma.member.deleteMany();
+  await prisma.scheduleEntry.deleteMany();
+  await prisma.squad.deleteMany();
+  await prisma.camp.deleteMany();
+  await prisma.user.deleteMany();
+
+  const hash = (p: string) => bcrypt.hash(p, 10);
+
+  const admin = await prisma.user.create({
+    data: { name: "Супер Адмін", email: "admin@camp.local", role: "SUPER_ADMIN", passwordHash: await hash("admin12345") },
+  });
+  await prisma.user.create({
+    data: { name: "Директор Табору", email: "director@camp.local", role: "DIRECTOR", passwordHash: await hash("director123") },
+  });
+  const leader1 = await prisma.user.create({
+    data: { name: "Вожатий Перший", email: "leader1@camp.local", role: "LEADER", passwordHash: await hash("leader12345") },
+  });
+  const leader2 = await prisma.user.create({
+    data: { name: "Вожатий Другий", email: "leader2@camp.local", role: "LEADER", passwordHash: await hash("leader12345") },
+  });
+
+  const camp = await prisma.camp.create({
+    data: {
+      name: "Табір 2026",
+      year: 2026,
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-06-14"),
+      description: "Літній християнський табір — демо-дані",
+    },
+  });
+
+  const squadDefs = [
+    { name: "Орли", leaderUser: leader1.id, leaderName: "Вожатий Перший", assistant: "Помічник А" },
+    { name: "Леви", leaderUser: leader2.id, leaderName: "Вожатий Другий", assistant: "Помічник Б" },
+    { name: "Соколи", leaderUser: null, leaderName: "Іван Іваненко", assistant: "Помічник В" },
+  ];
+  const squads = [];
+  for (let i = 0; i < squadDefs.length; i++) {
+    const d = squadDefs[i];
+    squads.push(
+      await prisma.squad.create({
+        data: {
+          campId: camp.id,
+          name: d.name,
+          color: SQUAD_COLORS[i],
+          leaderUserId: d.leaderUser,
+          leaderName: d.leaderName,
+          assistantName: d.assistant,
+        },
+      }),
+    );
+  }
+
+  const usedCodes = new Set<string>();
+  const uniqueCode = () => {
+    let c = generateCode();
+    while (usedCodes.has(c)) c = generateCode();
+    usedCodes.add(c);
+    return c;
+  };
+
+  // 33 members spread across squads; a few incomplete; two with birthdays this week.
+  const TOTAL = 33;
+  for (let i = 0; i < TOTAL; i++) {
+    const gender = pick(GENDERS);
+    const firstName = gender === "MALE" ? pick(MALE_NAMES) : pick(FEMALE_NAMES);
+    const lastName = pick(LAST);
+    const squad = squads[i % squads.length];
+    const complete = i % 7 !== 0; // ~1 in 7 left incomplete
+
+    // Two members get a birthday in the current demo week (June 2026).
+    const dob =
+      i < 2
+        ? new Date(2014, 5, 7 + i)
+        : complete
+          ? new Date(2010 + (i % 6), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 27))
+          : null;
+
+    const profile = {
+      gender,
+      agility: complete ? scale() : null,
+      strength: complete ? scale() : null,
+      doesSports: chance(0.5),
+      sportType: pick(SPORTS) || null,
+      drawing: complete ? scale() : null,
+      poetry: complete ? scale() : null,
+      isMusician: chance(0.3),
+      englishLevel: complete ? scale() : null,
+      generalLevel: complete ? scale() : null,
+      personalityType: complete ? pick(PERSONALITY) : null,
+      isExceptional: chance(0.15),
+      firstTimeAtCamp: chance(0.4),
+      panicAttacks: chance(0.1),
+    };
+
+    const { physicalScore, mentalScore } = computeScores(profile);
+
+    await prisma.member.create({
+      data: {
+        campId: camp.id,
+        squadId: squad.id,
+        code: uniqueCode(),
+        isLeader: i % squads.length === 0 && i < squads.length, // one leader child per squad
+        isProfileComplete: isProfileComplete({ lastName, firstName, dateOfBirth: dob?.toISOString(), ...profile } as never),
+        physicalScore,
+        mentalScore,
+        lastName,
+        firstName,
+        dateOfBirth: dob,
+        residenceType: pick(RESIDENCE),
+        build: pick(BUILD),
+        height: 120 + Math.floor(rnd() * 60),
+        childPhone: chance(0.5) ? "+38067" + Math.floor(1000000 + rnd() * 8999999) : null,
+        parentsPhone: "+38050" + Math.floor(1000000 + rnd() * 8999999),
+        guardianName: `${lastName} ${gender === "MALE" ? "Олена" : "Сергій"}`,
+        address: chance(0.6) ? "м. Київ, вул. Прикладна, " + (1 + Math.floor(rnd() * 100)) : null,
+        instagram: chance(0.4) ? "@" + firstName.toLowerCase() + i : null,
+        ...profile,
+      },
+    });
+  }
+
+  // Recompute squad aggregates from members.
+  for (const squad of squads) {
+    const agg = await prisma.member.aggregate({
+      where: { squadId: squad.id },
+      _sum: { physicalScore: true, mentalScore: true },
+    });
+    await prisma.squad.update({
+      where: { id: squad.id },
+      data: {
+        totalPhysical: agg._sum.physicalScore ?? 0,
+        totalMental: agg._sum.mentalScore ?? 0,
+      },
+    });
+  }
+
+  // A sample day's schedule.
+  const day = new Date("2026-06-02T12:00:00");
+  const slots = [
+    ["08:00", "08:30", "Підйом і зарядка", "Спільна зарядка на майданчику"],
+    ["08:30", "09:00", "Сніданок", null],
+    ["09:00", "10:30", "Ранкове служіння", "Поклоніння та слово"],
+    ["11:00", "13:00", "Загонові ігри", "Активності по загонах"],
+    ["13:00", "14:00", "Обід", null],
+    ["20:00", "21:30", "Вечірнє багаття", "Спільне зібрання"],
+  ];
+  for (const [startTime, endTime, title, description] of slots) {
+    await prisma.scheduleEntry.create({
+      data: { campId: camp.id, date: day, startTime: startTime!, endTime, title: title!, description },
+    });
+  }
+
+  console.log(`Done. Admin login: admin@camp.local / admin12345`);
+  console.log(`Camp "${camp.name}" with ${TOTAL} members and ${squads.length} squads (owner ${admin.email}).`);
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
