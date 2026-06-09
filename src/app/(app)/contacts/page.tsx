@@ -6,31 +6,38 @@ import { ContactsList } from "./contacts-client";
 export default async function ContactsPage() {
   const camp = await requireActiveCamp();
 
-  const members = await prisma.member.findMany({
-    where: { campId: camp.id },
-    orderBy: [{ isLeader: "desc" }, { lastName: "asc" }],
-    select: {
-      id: true,
-      lastName: true,
-      firstName: true,
-      middleName: true,
-      isLeader: true,
-      childPhone: true,
-      parentsPhone: true,
-      guardianName: true,
-      additionalContact: true,
-      address: true,
-      instagram: true,
-      telegram: true,
-      otherSocial: true,
-      squad: { select: { id: true, name: true, color: true } },
-    },
-  });
+  const [members, squads] = await Promise.all([
+    prisma.member.findMany({
+      where: { campId: camp.id },
+      orderBy: [{ isLeader: "desc" }, { lastName: "asc" }],
+      select: {
+        id: true,
+        lastName: true,
+        firstName: true,
+        middleName: true,
+        isLeader: true,
+        childPhone: true,
+        parentsPhone: true,
+        guardianName: true,
+        additionalContact: true,
+        address: true,
+        instagram: true,
+        telegram: true,
+        otherSocial: true,
+        squad: { select: { id: true, name: true, color: true } },
+      },
+    }),
+    prisma.squad.findMany({
+      where: { campId: camp.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
     <Container>
       <PageHeader title="Контакти" description={`Табір «${camp.name}»`} />
-      <ContactsList members={members} />
+      <ContactsList members={members} squads={squads} />
     </Container>
   );
 }

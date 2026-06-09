@@ -4,7 +4,7 @@ import * as React from "react";
 import { Phone, MapPin, Crown, AtSign, Send, Search, SearchX } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { fullName } from "@/lib/utils";
 
 export type ContactRow = {
@@ -24,13 +24,22 @@ export type ContactRow = {
   squad: { id: string; name: string; color: string } | null;
 };
 
-export function ContactsList({ members }: { members: ContactRow[] }) {
+export function ContactsList({
+  members,
+  squads,
+}: {
+  members: ContactRow[];
+  squads: { id: string; name: string }[];
+}) {
   const [query, setQuery] = React.useState("");
+  const [squadId, setSquadId] = React.useState("");
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return members;
     return members.filter((m) => {
+      if (squadId === "none" && m.squad) return false;
+      if (squadId && squadId !== "none" && m.squad?.id !== squadId) return false;
+      if (!q) return true;
       const haystack = [
         fullName(m),
         m.squad?.name,
@@ -48,7 +57,7 @@ export function ContactsList({ members }: { members: ContactRow[] }) {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [members, query]);
+  }, [members, query, squadId]);
 
   // Group by squad; unassigned last (leaders already sorted first server-side).
   const groups = React.useMemo(() => {
@@ -67,15 +76,26 @@ export function ContactsList({ members }: { members: ContactRow[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Пошук за іменем, телефоном, загоном…"
-          className="pl-11"
-          inputMode="search"
-        />
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Пошук за іменем, телефоном, загоном…"
+            className="pl-11"
+            inputMode="search"
+          />
+        </div>
+        <Select value={squadId} onChange={(e) => setSquadId(e.target.value)}>
+          <option value="">Усі загони</option>
+          {squads.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+          <option value="none">Без загону</option>
+        </Select>
       </div>
 
       {members.length === 0 ? (
