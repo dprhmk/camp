@@ -122,10 +122,10 @@ export async function updateMemberAction(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
-  await requireActiveCamp();
+  const camp = await requireActiveCamp();
 
-  const member = await prisma.member.findUnique({
-    where: { id: memberId },
+  const member = await prisma.member.findFirst({
+    where: { id: memberId, campId: camp.id },
     include: { squad: { select: { leaderUserId: true } } },
   });
   if (!member) return { ok: false, message: "Учасника не знайдено" };
@@ -159,9 +159,9 @@ export async function updateMemberAction(
 
 export async function deleteMemberAction(memberId: string) {
   const user = await requireUser();
-  await requireActiveCamp();
-  const member = await prisma.member.findUnique({
-    where: { id: memberId },
+  const camp = await requireActiveCamp();
+  const member = await prisma.member.findFirst({
+    where: { id: memberId, campId: camp.id },
     include: { squad: { select: { leaderUserId: true } } },
   });
   if (!member) return;

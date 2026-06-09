@@ -30,14 +30,14 @@ const boolish = z
 // --- Auth ------------------------------------------------------------------
 
 export const loginSchema = z.object({
-  email: z.string().trim().min(1, "Введіть email").email("Некоректний email"),
+  email: z.string().trim().min(1, "Введіть email").pipe(z.email("Некоректний email")),
   password: z.string().min(1, "Введіть пароль"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const userSchema = z.object({
   name: requiredText("Введіть імʼя"),
-  email: z.string().trim().min(1, "Введіть email").email("Некоректний email"),
+  email: z.string().trim().min(1, "Введіть email").pipe(z.email("Некоректний email")),
   role: z.enum(ROLES as unknown as [string, ...string[]]),
   password: z
     .string()

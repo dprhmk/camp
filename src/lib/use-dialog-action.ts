@@ -18,12 +18,14 @@ export function useDialogAction(
   const formAction = React.useCallback(
     (formData: FormData) => {
       startTransition(async () => {
-        const result = (await action(state, formData)) ?? {};
+        // The actions here don't read prev state; pass the initial value and
+        // keep this callback stable (no dependency on the changing `state`).
+        const result = (await action(initialActionState, formData)) ?? {};
         setState(result);
         if (result.ok) setOpen(false);
       });
     },
-    [action, state],
+    [action],
   );
 
   return { open, setOpen, state, formAction, pending };

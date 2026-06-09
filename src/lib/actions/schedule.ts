@@ -50,7 +50,7 @@ export async function updateScheduleAction(
   formData: FormData,
 ): Promise<ActionState> {
   await requirePermission("schedule:edit");
-  await requireActiveCamp();
+  const camp = await requireActiveCamp();
 
   const parsed = scheduleSchema.safeParse({
     date: formData.get("date"),
@@ -61,8 +61,9 @@ export async function updateScheduleAction(
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
-  await prisma.scheduleEntry.update({
-    where: { id: entryId },
+  // Scope to the active camp so a foreign entry id cannot be edited.
+  await prisma.scheduleEntry.updateMany({
+    where: { id: entryId, campId: camp.id },
     data: {
       date: parseDay(parsed.data.date),
       startTime: parsed.data.startTime,
@@ -78,6 +79,7 @@ export async function updateScheduleAction(
 
 export async function deleteScheduleAction(entryId: string) {
   await requirePermission("schedule:edit");
-  await prisma.scheduleEntry.delete({ where: { id: entryId } });
+  const camp = await requireActiveCamp();
+  await prisma.scheduleEntry.deleteMany({ where: { id: entryId, campId: camp.id } });
   revalidatePath("/schedule");
 }

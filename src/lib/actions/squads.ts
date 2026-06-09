@@ -49,9 +49,9 @@ export async function updateSquadAction(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
-  await requireActiveCamp();
+  const camp = await requireActiveCamp();
 
-  const squad = await prisma.squad.findUnique({ where: { id: squadId } });
+  const squad = await prisma.squad.findFirst({ where: { id: squadId, campId: camp.id } });
   if (!squad) return { ok: false, message: "Загін не знайдено" };
   if (!canManageSquad(user, squad)) {
     return { ok: false, message: "Ви можете керувати лише своїм загоном" };
@@ -86,8 +86,8 @@ export async function updateSquadAction(
 
 export async function deleteSquadAction(squadId: string) {
   const user = await requireUser();
-  await requireActiveCamp();
-  const squad = await prisma.squad.findUnique({ where: { id: squadId } });
+  const camp = await requireActiveCamp();
+  const squad = await prisma.squad.findFirst({ where: { id: squadId, campId: camp.id } });
   if (!squad) return;
   if (!can(user, "squad:manageAny")) return;
 

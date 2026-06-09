@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Search, Star, Crown, ChevronRight, SearchX } from "lucide-react";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/feedback";
-import { cn, fullName, isBirthdayThisWeek } from "@/lib/utils";
+import { cn, fullName } from "@/lib/utils";
 
 type MemberRow = {
   id: string;
@@ -15,7 +15,7 @@ type MemberRow = {
   middleName: string | null;
   isLeader: boolean;
   isProfileComplete: boolean;
-  dateOfBirth: string | null;
+  hasBirthday: boolean;
   physicalScore: number;
   mentalScore: number;
   squad: { id: string; name: string; color: string } | null;
@@ -90,7 +90,7 @@ export function MembersList({
       ) : (
         <ul className="space-y-2">
           {filtered.map((m) => {
-            const birthday = isBirthdayThisWeek(m.dateOfBirth);
+            const birthday = m.hasBirthday;
             return (
               <li key={m.id}>
                 <Link

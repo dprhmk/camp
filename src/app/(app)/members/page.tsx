@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireActiveCamp } from "@/lib/camp";
+import { isBirthdayThisWeek } from "@/lib/utils";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { MembersList } from "./members-list";
@@ -57,7 +58,7 @@ export default async function MembersPage() {
           middleName: m.middleName,
           isLeader: m.isLeader,
           isProfileComplete: m.isProfileComplete,
-          dateOfBirth: m.dateOfBirth ? m.dateOfBirth.toISOString() : null,
+          hasBirthday: isBirthdayThisWeek(m.dateOfBirth),
           physicalScore: m.physicalScore,
           mentalScore: m.mentalScore,
           squad: m.squad,

@@ -93,7 +93,7 @@ export function SquadsView({
 }
 
 function BalanceBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
-  const pct = Math.min(100, (value / max) * 100);
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div>
       <div className="mb-1 flex justify-between text-xs text-slate-500">
