@@ -96,7 +96,8 @@ export type ScheduleInput = z.infer<typeof scheduleSchema>;
 
 export const generateSchema = z.object({
   numSquads: z.coerce.number().int().min(2, "Мінімум 2 загони").max(6, "Максимум 6 загонів"),
-  leaderNames: z.array(z.string().trim()).optional(),
+  // One selected leader account id per squad (in squad order); "" means none.
+  leaderUserIds: z.array(z.string().trim()).optional(),
 });
 
 // --- Member (the big profile) ---------------------------------------------

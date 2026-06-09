@@ -23,11 +23,11 @@ export async function generateTeamsAction(
 
   const parsed = generateSchema.safeParse({
     numSquads: formData.get("numSquads"),
-    leaderNames: formData.getAll("leaderNames").map(String),
+    leaderUserIds: formData.getAll("leaderUserIds").map(String),
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
-  const { numSquads, leaderNames = [] } = parsed.data;
+  const { numSquads, leaderUserIds = [] } = parsed.data;
 
   const members = await prisma.member.findMany({
     where: { campId: camp.id },
@@ -38,6 +38,17 @@ export async function generateTeamsAction(
     return { ok: false, message: "У таборі ще немає учасників для розподілу" };
   }
 
+  // Resolve selected leader accounts -> { id, name } so we can set both the
+  // account binding and the display name on each new squad.
+  const chosenIds = [...new Set(leaderUserIds.filter(Boolean))];
+  const leaderUsers = chosenIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: chosenIds } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const leaderById = new Map(leaderUsers.map((u) => [u.id, u.name]));
+
   const result = distributeMembers(members, numSquads);
 
   await prisma.$transaction(async (tx) => {
@@ -45,12 +56,16 @@ export async function generateTeamsAction(
     await tx.squad.deleteMany({ where: { campId: camp.id } });
 
     for (const squad of result.squads) {
+      const leaderUserId = leaderUserIds[squad.index] || null;
+      const leaderName = leaderUserId ? (leaderById.get(leaderUserId) ?? null) : null;
       const created = await tx.squad.create({
         data: {
           campId: camp.id,
           name: `Загін ${squad.index + 1}`,
           color: SQUAD_COLORS[squad.index % SQUAD_COLORS.length],
-          leaderName: leaderNames[squad.index]?.trim() || null,
+          // Bind the chosen leader account and copy its name for display.
+          leaderUserId: leaderById.has(leaderUserId ?? "") ? leaderUserId : null,
+          leaderName,
           totalPhysical: squad.totalPhysical,
           totalMental: squad.totalMental,
         },

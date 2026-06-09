@@ -6,14 +6,42 @@ import { Shuffle } from "lucide-react";
 import { generateTeamsAction } from "@/lib/actions/generate";
 import { initialActionState } from "@/lib/actions/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { SubmitButton } from "@/components/form/submit-button";
 
-export function GenerateForm({ memberCount }: { memberCount: number }) {
-  const [count, setCount] = React.useState(3);
+type Leader = { id: string; name: string };
+
+export function GenerateForm({
+  memberCount,
+  leaders,
+}: {
+  memberCount: number;
+  leaders: Leader[];
+}) {
+  const [count, setCount] = React.useState(4);
+  // Selected leader account id per squad ("" = none).
+  const [selected, setSelected] = React.useState<string[]>([]);
   const [state, formAction] = useActionState(generateTeamsAction, initialActionState);
+
+  // Only the currently visible squad slots count toward "already taken".
+  const visible = Array.from({ length: count }, (_, i) => selected[i] ?? "");
+
+  function setAt(index: number, value: string) {
+    setSelected((prev) => {
+      const next = [...prev];
+      while (next.length < count) next.push("");
+      next[index] = value;
+      return next;
+    });
+  }
+
+  // Leaders chosen in the OTHER slots — hidden from this slot's options.
+  function optionsFor(index: number) {
+    const takenElsewhere = new Set(visible.filter((id, j) => j !== index && id));
+    return leaders.filter((l) => l.id === visible[index] || !takenElsewhere.has(l.id));
+  }
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -47,15 +75,32 @@ export function GenerateForm({ memberCount }: { memberCount: number }) {
           </Field>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-700">Імена вожатих (необовʼязково)</p>
-            {Array.from({ length: count }, (_, i) => (
-              <Input
-                key={i}
-                name="leaderNames"
-                placeholder={`Вожатий загону ${i + 1}`}
-                aria-label={`Вожатий загону ${i + 1}`}
-              />
-            ))}
+            <p className="text-sm font-medium text-slate-700">
+              Вожаті загонів{" "}
+              <span className="font-normal text-slate-400">(необовʼязково)</span>
+            </p>
+            {leaders.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                Немає акаунтів вожатих. Створіть їх у розділі «Акаунти».
+              </p>
+            ) : (
+              Array.from({ length: count }, (_, i) => (
+                <Select
+                  key={i}
+                  name="leaderUserIds"
+                  aria-label={`Вожатий загону ${i + 1}`}
+                  value={visible[i]}
+                  onChange={(e) => setAt(i, e.target.value)}
+                >
+                  <option value="">Загін {i + 1} — вожатий не вибраний</option>
+                  {optionsFor(i).map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </Select>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

@@ -49,7 +49,7 @@ async function main() {
   });
   // Four squad leaders, each with a personal account.
   const leaderNames = ["Вожатий Перший", "Вожатий Другий", "Вожатий Третій", "Вожатий Четвертий"];
-  const leaders = [];
+  const leaders: { id: string; name: string }[] = [];
   for (let i = 0; i < 4; i++) {
     leaders.push(
       await prisma.user.create({

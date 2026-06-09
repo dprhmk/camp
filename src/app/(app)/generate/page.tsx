@@ -8,7 +8,14 @@ import { GenerateForm } from "./generate-form";
 export default async function GeneratePage() {
   await requirePermission("generate:run");
   const camp = await requireActiveCamp();
-  const memberCount = await prisma.member.count({ where: { campId: camp.id } });
+  const [memberCount, leaders] = await Promise.all([
+    prisma.member.count({ where: { campId: camp.id } }),
+    prisma.user.findMany({
+      where: { role: { in: ["LEADER", "DIRECTOR"] } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
     <Container>
@@ -22,7 +29,7 @@ export default async function GeneratePage() {
           У таборі ще немає учасників. Додайте учасників, перш ніж генерувати команди.
         </Alert>
       ) : (
-        <GenerateForm memberCount={memberCount} />
+        <GenerateForm memberCount={memberCount} leaders={leaders} />
       )}
     </Container>
   );
