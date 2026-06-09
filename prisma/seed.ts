@@ -47,12 +47,21 @@ async function main() {
   await prisma.user.create({
     data: { name: "Директор Табору", email: "director@camp.local", role: "DIRECTOR", passwordHash: await hash("director123") },
   });
-  const leader1 = await prisma.user.create({
-    data: { name: "Вожатий Перший", email: "leader1@camp.local", role: "LEADER", passwordHash: await hash("leader12345") },
-  });
-  const leader2 = await prisma.user.create({
-    data: { name: "Вожатий Другий", email: "leader2@camp.local", role: "LEADER", passwordHash: await hash("leader12345") },
-  });
+  // Four squad leaders, each with a personal account.
+  const leaderNames = ["Вожатий Перший", "Вожатий Другий", "Вожатий Третій", "Вожатий Четвертий"];
+  const leaders = [];
+  for (let i = 0; i < 4; i++) {
+    leaders.push(
+      await prisma.user.create({
+        data: {
+          name: leaderNames[i],
+          email: `leader${i + 1}@camp.local`,
+          role: "LEADER",
+          passwordHash: await hash("leader12345"),
+        },
+      }),
+    );
+  }
 
   const camp = await prisma.camp.create({
     data: {
@@ -64,11 +73,13 @@ async function main() {
     },
   });
 
+  // Four squads, each with a leader account and a named assistant.
   const squadDefs = [
-    { name: "Орли", leaderUser: leader1.id, leaderName: "Вожатий Перший", assistant: "Помічник А" },
-    { name: "Леви", leaderUser: leader2.id, leaderName: "Вожатий Другий", assistant: "Помічник Б" },
-    { name: "Соколи", leaderUser: null, leaderName: "Іван Іваненко", assistant: "Помічник В" },
-  ];
+    { name: "Орли", leaderName: "Вожатий Перший", assistant: "Помічник Перший" },
+    { name: "Леви", leaderName: "Вожатий Другий", assistant: "Помічник Другий" },
+    { name: "Соколи", leaderName: "Вожатий Третій", assistant: "Помічник Третій" },
+    { name: "Вовки", leaderName: "Вожатий Четвертий", assistant: "Помічник Четвертий" },
+  ].map((d, i) => ({ ...d, leaderUser: leaders[i].id }));
   const squads = [];
   for (let i = 0; i < squadDefs.length; i++) {
     const d = squadDefs[i];
@@ -94,19 +105,20 @@ async function main() {
     return c;
   };
 
-  // 33 members spread across squads; a few incomplete; two with birthdays this week.
-  const TOTAL = 33;
+  // 30 members per squad (120 total); a few incomplete; two with birthdays this week.
+  const PER_SQUAD = 30;
+  const TOTAL = squads.length * PER_SQUAD;
   for (let i = 0; i < TOTAL; i++) {
     const gender = pick(GENDERS);
     const firstName = gender === "MALE" ? pick(MALE_NAMES) : pick(FEMALE_NAMES);
     const lastName = pick(LAST);
-    const squad = squads[i % squads.length];
+    const squad = squads[Math.floor(i / PER_SQUAD)]; // exactly 30 per squad
     const complete = i % 7 !== 0; // ~1 in 7 left incomplete
 
     // Two members get a birthday in the current demo week (June 2026).
     const dob =
       i < 2
-        ? new Date(2014, 5, 7 + i)
+        ? new Date(2014, 5, 8 + i)
         : complete
           ? new Date(2010 + (i % 6), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 27))
           : null;
@@ -135,7 +147,7 @@ async function main() {
         campId: camp.id,
         squadId: squad.id,
         code: uniqueCode(),
-        isLeader: i % squads.length === 0 && i < squads.length, // one leader child per squad
+        isLeader: i % PER_SQUAD === 0, // one leader child at the start of each squad
         isProfileComplete: isProfileComplete({ lastName, firstName, dateOfBirth: dob?.toISOString(), ...profile } as never),
         physicalScore,
         mentalScore,
