@@ -56,8 +56,8 @@ export function MemberForm({
       <Section title="Основне">
         <PhotoUpload name="photoUrl" defaultUrl={str(values.photoUrl) || null} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Text name="lastName" label="Прізвище" required def={values.lastName} err={err.lastName} />
-          <Text name="firstName" label="Імʼя" required def={values.firstName} err={err.firstName} />
+          <Text name="lastName" label="Прізвище" def={values.lastName} err={err.lastName} />
+          <Text name="firstName" label="Імʼя" def={values.firstName} err={err.firstName} />
           <Text name="middleName" label="По батькові" def={values.middleName} err={err.middleName} />
           <Field label="Дата народження" htmlFor="dateOfBirth" error={err.dateOfBirth}>
             <Input id="dateOfBirth" name="dateOfBirth" type="date" defaultValue={str(values.dateOfBirth).slice(0, 10)} />
@@ -85,24 +85,35 @@ export function MemberForm({
           <Field label="Зріст, см" htmlFor="height" error={err.height}>
             <Input id="height" name="height" type="number" inputMode="numeric" defaultValue={str(values.height)} aria-invalid={!!err.height} />
           </Field>
+          <Field label="Вага, кг" htmlFor="weight" error={err.weight}>
+            <Input id="weight" name="weight" type="number" inputMode="numeric" defaultValue={str(values.weight)} aria-invalid={!!err.weight} />
+          </Field>
           <SelectField name="build" label="Статура" options={BUILD_OPTIONS} def={values.build} err={err.build} />
+          <Text name="sportType" label="Вид спорту" def={values.sportType} err={err.sportType} />
           <ScaleField name="agility" label="Спритність" def={values.agility} err={err.agility} />
           <ScaleField name="strength" label="Сила" def={values.strength} err={err.strength} />
-          <Text name="sportType" label="Вид спорту" def={values.sportType} err={err.sportType} />
+          <ScaleField name="endurance" label="Витривалість" def={values.endurance} err={err.endurance} />
+          <ScaleField name="coordination" label="Координація" def={values.coordination} err={err.coordination} />
         </div>
         <Checkbox name="doesSports" label="Займається спортом" defaultChecked={bool(values.doesSports)} />
       </Section>
 
-      <Section title="Медичне">
+      <Section title="Розумова">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ScaleField name="intellect" label="Інтелект" def={values.intellect} err={err.intellect} />
+          <ScaleField name="logic" label="Логіка" def={values.logic} err={err.logic} />
+          <ScaleField name="creativity" label="Творчість" def={values.creativity} err={err.creativity} />
+          <ScaleField name="communication" label="Комунікація" def={values.communication} err={err.communication} />
+        </div>
+      </Section>
+
+      <Section title="Медичне та інше">
         <div className="grid gap-4">
           <Area name="allergies" label="Алергії" def={values.allergies} err={err.allergies} />
           <Area name="medicalRestrictions" label="Медичні обмеження" def={values.medicalRestrictions} err={err.medicalRestrictions} />
           <Area name="physicalRestrictions" label="Фізичні обмеження" def={values.physicalRestrictions} err={err.physicalRestrictions} />
           <Area name="medicalNotes" label="Нотатки" def={values.medicalNotes} err={err.medicalNotes} />
         </div>
-      </Section>
-
-      <Section title="Психологічне">
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField name="personalityType" label="Тип особистості" options={PERSONALITY_OPTIONS} def={values.personalityType} err={err.personalityType} />
         </div>
@@ -110,22 +121,6 @@ export function MemberForm({
           <Checkbox name="firstTimeAtCamp" label="Перший раз у таборі" defaultChecked={bool(values.firstTimeAtCamp)} />
           <Checkbox name="isExceptional" label="Винятковий" defaultChecked={bool(values.isExceptional)} />
           <Checkbox name="panicAttacks" label="Панічні атаки" defaultChecked={bool(values.panicAttacks)} />
-        </div>
-      </Section>
-
-      <Section title="Творче">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ScaleField name="drawing" label="Малювання" def={values.drawing} err={err.drawing} />
-          <ScaleField name="poetry" label="Поезія" def={values.poetry} err={err.poetry} />
-          <Text name="instruments" label="Інструменти" def={values.instruments} err={err.instruments} />
-        </div>
-        <Checkbox name="isMusician" label="Музикант" defaultChecked={bool(values.isMusician)} />
-      </Section>
-
-      <Section title="Інтелект">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ScaleField name="englishLevel" label="Рівень англійської" def={values.englishLevel} err={err.englishLevel} />
-          <ScaleField name="generalLevel" label="Загальний рівень" def={values.generalLevel} err={err.generalLevel} />
         </div>
       </Section>
 

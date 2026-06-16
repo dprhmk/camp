@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { StatsRadar } from "@/components/stats-radar";
 import { SQUAD_COLORS } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 
@@ -22,10 +23,11 @@ type Squad = {
   leaderUserId: string | null;
   leaderName: string | null;
   assistantName: string | null;
-  totalPhysical: number;
-  totalMental: number;
   members: number;
   canManage: boolean;
+  physicalScore: number; // average per member
+  mentalScore: number;
+  traits: Record<string, number>;
 };
 type Leader = { id: string; name: string };
 
@@ -34,13 +36,11 @@ export function SquadsView({
   leaders,
   canChangeLeader,
   canDelete,
-  maxTotal,
 }: {
   squads: Squad[];
   leaders: Leader[];
   canChangeLeader: boolean;
   canDelete: boolean;
-  maxTotal: number;
 }) {
   return (
     <div className="space-y-3">
@@ -83,26 +83,16 @@ export function SquadsView({
               )}
             </div>
 
-            <BalanceBar label="Фізичні" value={s.totalPhysical} max={maxTotal} color="#0ea5e9" />
-            <BalanceBar label="Ментальні" value={s.totalMental} max={maxTotal} color="#a855f7" />
+            <StatsRadar
+              width={280}
+              color={s.color}
+              traits={s.traits}
+              physicalScore={s.physicalScore}
+              mentalScore={s.mentalScore}
+            />
           </CardContent>
         </Card>
       ))}
-    </div>
-  );
-}
-
-function BalanceBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
-  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
-  return (
-    <div>
-      <div className="mb-1 flex justify-between text-xs text-slate-500">
-        <span>{label}</span>
-        <span className="font-medium text-slate-700">{value}</span>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
     </div>
   );
 }

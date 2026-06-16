@@ -5,12 +5,13 @@ import { Phone, MapPin, Crown, AtSign, Send, Search, SearchX } from "lucide-reac
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
 import { Input, Select } from "@/components/ui/input";
-import { fullName } from "@/lib/utils";
+import { displayName, fullName } from "@/lib/utils";
 
 export type ContactRow = {
   id: string;
-  lastName: string;
-  firstName: string;
+  code: string;
+  lastName: string | null;
+  firstName: string | null;
   middleName: string | null;
   isLeader: boolean;
   childPhone: string | null;
@@ -120,7 +121,7 @@ export function ContactsList({
                   <Card key={m.id}>
                     <CardContent className="space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-slate-900">{fullName(m)}</span>
+                        <span className="font-medium text-slate-900">{displayName(m)}</span>
                         {m.isLeader && <Crown className="size-4 text-amber-500" />}
                       </div>
                       <div className="space-y-1.5 text-sm">

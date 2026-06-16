@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Search, Star, Crown, ChevronRight, SearchX } from "lucide-react";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/feedback";
-import { cn, fullName } from "@/lib/utils";
+import { cn, displayName, fullName } from "@/lib/utils";
 
 type MemberRow = {
   id: string;
   code: string;
-  lastName: string;
-  firstName: string;
+  lastName: string | null;
+  firstName: string | null;
   middleName: string | null;
   isLeader: boolean;
   isProfileComplete: boolean;
@@ -117,7 +117,7 @@ export function MembersList({
                           !m.isProfileComplete ? "text-red-600" : "text-slate-900",
                         )}
                       >
-                        {fullName(m)}
+                        {displayName(m)}
                       </span>
                       {m.isLeader && <Crown className="size-4 shrink-0 text-amber-500" />}
                       {birthday && <span title="День народження цього тижня">🎂</span>}

@@ -56,37 +56,32 @@ export function ProfileView({ m }: { m: Member }) {
 
       <Group title="Фізичне">
         <Row label="Зріст, см" value={num(m.height)} />
+        <Row label="Вага, кг" value={num(m.weight)} />
         <Row label="Статура" value={labelOf(BUILD_OPTIONS, m.build)} />
         <Row label="Займається спортом" value={yn(m.doesSports)} />
         <Row label="Вид спорту" value={text(m.sportType)} />
         <Row label="Спритність" value={num(m.agility)} />
         <Row label="Сила" value={num(m.strength)} />
+        <Row label="Витривалість" value={num(m.endurance)} />
+        <Row label="Координація" value={num(m.coordination)} />
       </Group>
 
-      <Group title="Медичне">
+      <Group title="Розумова">
+        <Row label="Інтелект" value={num(m.intellect)} />
+        <Row label="Логіка" value={num(m.logic)} />
+        <Row label="Творчість" value={num(m.creativity)} />
+        <Row label="Комунікація" value={num(m.communication)} />
+      </Group>
+
+      <Group title="Медичне та інше">
         <Row label="Алергії" value={text(m.allergies)} />
         <Row label="Медичні обмеження" value={text(m.medicalRestrictions)} />
         <Row label="Фізичні обмеження" value={text(m.physicalRestrictions)} />
         <Row label="Нотатки" value={text(m.medicalNotes)} />
-      </Group>
-
-      <Group title="Психологічне">
         <Row label="Тип особистості" value={labelOf(PERSONALITY_OPTIONS, m.personalityType)} />
         <Row label="Перший раз у таборі" value={yn(m.firstTimeAtCamp)} />
         <Row label="Винятковий" value={yn(m.isExceptional)} />
         <Row label="Панічні атаки" value={yn(m.panicAttacks)} />
-      </Group>
-
-      <Group title="Творче">
-        <Row label="Малювання" value={num(m.drawing)} />
-        <Row label="Музикант" value={yn(m.isMusician)} />
-        <Row label="Інструменти" value={text(m.instruments)} />
-        <Row label="Поезія" value={num(m.poetry)} />
-      </Group>
-
-      <Group title="Інтелект">
-        <Row label="Рівень англійської" value={num(m.englishLevel)} />
-        <Row label="Загальний рівень" value={num(m.generalLevel)} />
       </Group>
     </div>
   );

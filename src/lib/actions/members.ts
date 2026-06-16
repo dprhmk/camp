@@ -21,15 +21,15 @@ function parseDate(value?: string) {
 
 /** Map validated input to a Prisma data object (without camp/code). */
 function toData(input: MemberInput) {
-  const { physicalScore, mentalScore } = computeScores(input);
+  const scores = computeScores(input);
   return {
     isLeader: input.isLeader ?? false,
     isProfileComplete: isProfileComplete(input),
-    physicalScore,
-    mentalScore,
+    physicalScore: scores.physicalScore,
+    mentalScore: scores.mentalScore,
     squadId: input.squadId ?? null,
-    lastName: input.lastName,
-    firstName: input.firstName,
+    lastName: input.lastName ?? null,
+    firstName: input.firstName ?? null,
     middleName: input.middleName ?? null,
     dateOfBirth: parseDate(input.dateOfBirth),
     gender: input.gender ?? null,
@@ -44,25 +44,26 @@ function toData(input: MemberInput) {
     otherSocial: input.otherSocial ?? null,
     address: input.address ?? null,
     height: input.height ?? null,
+    weight: input.weight ?? null,
     build: input.build ?? null,
     doesSports: input.doesSports ?? false,
     sportType: input.sportType ?? null,
     agility: input.agility ?? null,
     strength: input.strength ?? null,
+    endurance: input.endurance ?? null,
+    coordination: input.coordination ?? null,
+    intellect: input.intellect ?? null,
+    logic: input.logic ?? null,
+    creativity: input.creativity ?? null,
+    communication: input.communication ?? null,
     allergies: input.allergies ?? null,
     medicalRestrictions: input.medicalRestrictions ?? null,
     physicalRestrictions: input.physicalRestrictions ?? null,
     medicalNotes: input.medicalNotes ?? null,
+    personalityType: input.personalityType ?? null,
     firstTimeAtCamp: input.firstTimeAtCamp ?? false,
     isExceptional: input.isExceptional ?? false,
     panicAttacks: input.panicAttacks ?? false,
-    personalityType: input.personalityType ?? null,
-    drawing: input.drawing ?? null,
-    isMusician: input.isMusician ?? false,
-    instruments: input.instruments ?? null,
-    poetry: input.poetry ?? null,
-    englishLevel: input.englishLevel ?? null,
-    generalLevel: input.generalLevel ?? null,
   };
 }
 

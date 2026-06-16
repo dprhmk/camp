@@ -10,11 +10,18 @@ const optionalText = z
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
 
-// A 1..3 scale that accepts "" / numbers / numeric strings.
+// A 1..5 scale that accepts "" / numbers / numeric strings.
 const scale = z
-  .union([z.literal(""), z.coerce.number().int().min(1, "Від 1 до 3").max(3, "Від 1 до 3")])
+  .union([z.literal(""), z.coerce.number().int().min(1, "Від 1 до 5").max(5, "Від 1 до 5")])
   .optional()
   .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
+
+// An optional positive integer within a range (e.g. height, weight).
+const optionalInt = (min: number, max: number, msg: string) =>
+  z
+    .union([z.literal(""), z.coerce.number().int().min(min, msg).max(max, msg)])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
 
 const oneOf = (values: readonly string[]) =>
   z
@@ -103,9 +110,9 @@ export const generateSchema = z.object({
 // --- Member (the big profile) ---------------------------------------------
 
 export const memberSchema = z.object({
-  // Basic
-  lastName: requiredText("Введіть прізвище"),
-  firstName: requiredText("Введіть імʼя"),
+  // Basic — all optional on save; "ready for distribution" is enforced separately.
+  lastName: optionalText,
+  firstName: optionalText,
   middleName: optionalText,
   dateOfBirth: optionalText,
   gender: oneOf(GENDER_OPTIONS.map((o) => o.value)),
@@ -122,38 +129,32 @@ export const memberSchema = z.object({
   otherSocial: optionalText,
   address: optionalText,
 
-  // Physical
-  height: z
-    .union([z.literal(""), z.coerce.number().int().min(50, "Від 50 см").max(250, "До 250 см")])
-    .optional()
-    .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  // Physical: body metrics, sport and four motor traits (1..5)
+  height: optionalInt(50, 250, "Від 50 до 250 см"),
+  weight: optionalInt(10, 200, "Від 10 до 200 кг"),
   build: oneOf(BUILD_OPTIONS.map((o) => o.value)),
   doesSports: boolish,
   sportType: optionalText,
   agility: scale,
   strength: scale,
+  endurance: scale,
+  coordination: scale,
 
-  // Medical
+  // Mental ("розумова"): four traits (1..5)
+  intellect: scale,
+  logic: scale,
+  creativity: scale,
+  communication: scale,
+
+  // Medical & notes (profile info, not scored)
   allergies: optionalText,
   medicalRestrictions: optionalText,
   physicalRestrictions: optionalText,
   medicalNotes: optionalText,
-
-  // Psychological
+  personalityType: oneOf(PERSONALITY_OPTIONS.map((o) => o.value)),
   firstTimeAtCamp: boolish,
   isExceptional: boolish,
   panicAttacks: boolish,
-  personalityType: oneOf(PERSONALITY_OPTIONS.map((o) => o.value)),
-
-  // Creative
-  drawing: scale,
-  isMusician: boolish,
-  instruments: optionalText,
-  poetry: scale,
-
-  // Intellect
-  englishLevel: scale,
-  generalLevel: scale,
 
   // System
   squadId: optionalText,

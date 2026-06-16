@@ -1,63 +1,66 @@
-import { defaultScoringConfig, type ScoringConfig } from "./config";
+import {
+  bandValue,
+  defaultScoringConfig,
+  mentalRawMax,
+  physicalRawMax,
+  type ScoringConfig,
+} from "./config";
 
 // The subset of member profile fields that feed the scores. Kept deliberately
 // narrow so the scoring engine stays a pure, easily-tested function.
 export type ScorableMember = {
+  // Physical
   agility?: number | null;
   strength?: number | null;
+  endurance?: number | null;
+  coordination?: number | null;
   doesSports?: boolean | null;
   sportType?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  build?: string | null;
 
-  drawing?: number | null;
-  poetry?: number | null;
-  isMusician?: boolean | null;
-  englishLevel?: number | null;
-  generalLevel?: number | null;
-  personalityType?: string | null;
-  isExceptional?: boolean | null;
-  firstTimeAtCamp?: boolean | null;
-  panicAttacks?: boolean | null;
+  // Mental ("розумова")
+  intellect?: number | null;
+  logic?: number | null;
+  creativity?: number | null;
+  communication?: number | null;
 };
 
 const num = (v: number | null | undefined) => (typeof v === "number" ? v : 0);
 const round = (v: number) => Math.round(v * 100) / 100;
 
-/** Physical score: agility, strength, and sports involvement. */
+/** Physical score, normalised to 0..scaleMax. */
 export function computePhysicalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
   const c = config.physical;
-  let score = num(m.agility) * c.agilityWeight + num(m.strength) * c.strengthWeight;
-  if (m.doesSports) score += c.sportsBonus;
-  if (m.sportType && m.sportType.trim()) score += c.sportTypeBonus;
-  return round(Math.max(0, score));
+  let raw =
+    (num(m.agility) + num(m.strength) + num(m.endurance) + num(m.coordination)) * c.traitWeight;
+  if (m.doesSports) raw += c.sportsBonus;
+  if (m.sportType && m.sportType.trim()) raw += c.sportTypeBonus;
+  if (m.build && c.build[m.build] != null) raw += c.build[m.build];
+  if (m.height) raw += bandValue(c.heightBands, m.height);
+  if (m.weight) raw += bandValue(c.weightBands, m.weight);
+
+  const max = physicalRawMax(config);
+  return round(Math.max(0, (raw / max) * config.scaleMax));
 }
 
-/** Mental score: personality, creativity, intellect, and psychological flags. */
+/** Mental ("розумова") score, normalised to 0..scaleMax. */
 export function computeMentalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
-  const c = config.mental;
-  let score =
-    num(m.drawing) * c.drawingWeight +
-    num(m.poetry) * c.poetryWeight +
-    num(m.englishLevel) * c.englishWeight +
-    num(m.generalLevel) * c.generalWeight;
-
-  if (m.isMusician) score += c.musicianBonus;
-  if (m.personalityType && c.personality[m.personalityType] != null) {
-    score += c.personality[m.personalityType];
-  }
-  if (m.isExceptional) score += c.exceptionalBonus;
-  if (m.firstTimeAtCamp) score -= c.firstTimePenalty;
-  if (m.panicAttacks) score -= c.panicPenalty;
-
-  return round(Math.max(0, score));
+  const raw =
+    (num(m.intellect) + num(m.logic) + num(m.creativity) + num(m.communication)) *
+    config.mental.traitWeight;
+  const max = mentalRawMax(config);
+  return round(Math.max(0, (raw / max) * config.scaleMax));
 }
 
-/** Convenience: both scores at once. */
+/** Both normalised scales at once. */
 export function computeScores(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,

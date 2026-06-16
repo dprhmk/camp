@@ -42,11 +42,22 @@ export function isBirthdayThisWeek(
   return false;
 }
 
-/** Full name in "Last First Middle" order, trimmed. */
+/** Full name in "Last First Middle" order, trimmed. May be empty. */
 export function fullName(m: {
-  lastName: string;
-  firstName: string;
+  lastName?: string | null;
+  firstName?: string | null;
   middleName?: string | null;
 }): string {
   return [m.lastName, m.firstName, m.middleName].filter(Boolean).join(" ");
+}
+
+/** Display name, falling back to the QR code when no name is set yet. */
+export function displayName(m: {
+  lastName?: string | null;
+  firstName?: string | null;
+  middleName?: string | null;
+  code?: string;
+}): string {
+  const name = fullName(m);
+  return name || (m.code ? `Учасник ${m.code}` : "Без імені");
 }

@@ -26,7 +26,7 @@ function rnd() {
   return seed / 0x7fffffff;
 }
 const pick = <T>(arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
-const scale = () => 1 + Math.floor(rnd() * 3);
+const scale = () => 1 + Math.floor(rnd() * 5); // 1..5
 const chance = (p: number) => rnd() < p;
 
 async function main() {
@@ -125,22 +125,30 @@ async function main() {
 
     const profile = {
       gender,
-      agility: complete ? scale() : null,
-      strength: complete ? scale() : null,
+      // Body metrics are objective — always recorded.
+      height: 120 + Math.floor(rnd() * 60), // 120..179 cm
+      weight: 25 + Math.floor(rnd() * 45), // 25..69 kg
+      build: pick(BUILD),
       doesSports: chance(0.5),
       sportType: pick(SPORTS) || null,
-      drawing: complete ? scale() : null,
-      poetry: complete ? scale() : null,
-      isMusician: chance(0.3),
-      englishLevel: complete ? scale() : null,
-      generalLevel: complete ? scale() : null,
+      // Physical traits (1..5)
+      agility: complete ? scale() : null,
+      strength: complete ? scale() : null,
+      endurance: complete ? scale() : null,
+      coordination: complete ? scale() : null,
+      // Mental ("розумова") traits (1..5)
+      intellect: complete ? scale() : null,
+      logic: complete ? scale() : null,
+      creativity: complete ? scale() : null,
+      communication: complete ? scale() : null,
+      // Profile info (not scored)
       personalityType: complete ? pick(PERSONALITY) : null,
       isExceptional: chance(0.15),
       firstTimeAtCamp: chance(0.4),
       panicAttacks: chance(0.1),
     };
 
-    const { physicalScore, mentalScore } = computeScores(profile);
+    const scores = computeScores(profile);
 
     await prisma.member.create({
       data: {
@@ -149,14 +157,11 @@ async function main() {
         code: uniqueCode(),
         isLeader: i % PER_SQUAD === 0, // one leader child at the start of each squad
         isProfileComplete: isProfileComplete({ lastName, firstName, dateOfBirth: dob?.toISOString(), ...profile } as never),
-        physicalScore,
-        mentalScore,
+        ...scores,
         lastName,
         firstName,
         dateOfBirth: dob,
         residenceType: pick(RESIDENCE),
-        build: pick(BUILD),
-        height: 120 + Math.floor(rnd() * 60),
         childPhone: chance(0.5) ? "+38067" + Math.floor(1000000 + rnd() * 8999999) : null,
         parentsPhone: "+38050" + Math.floor(1000000 + rnd() * 8999999),
         guardianName: `${lastName} ${gender === "MALE" ? "Олена" : "Сергій"}`,

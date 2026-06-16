@@ -15,9 +15,11 @@ type Leader = { id: string; name: string };
 
 export function GenerateForm({
   memberCount,
+  notReadyCount,
   leaders,
 }: {
   memberCount: number;
+  notReadyCount: number;
   leaders: Leader[];
 }) {
   const [count, setCount] = React.useState(4);
@@ -47,10 +49,17 @@ export function GenerateForm({
     <form action={formAction} className="space-y-4" noValidate>
       {state.message && <Alert variant="error">{state.message}</Alert>}
 
-      <Alert variant="info">
-        Буде розподілено <b>{memberCount}</b> учасників. Поточні загони будуть{" "}
-        <b>замінені</b> новими. Виконуйте на старті сезону.
-      </Alert>
+      {notReadyCount > 0 ? (
+        <Alert variant="error">
+          <b>{notReadyCount}</b> з {memberCount} учасників мають незаповнену анкету. Розподіл
+          заблоковано, поки не заповните характеристики всіх (потрібні для чесного балансу).
+        </Alert>
+      ) : (
+        <Alert variant="info">
+          Буде розподілено <b>{memberCount}</b> учасників. Поточні загони будуть{" "}
+          <b>замінені</b> новими. Виконуйте на старті сезону.
+        </Alert>
+      )}
 
       <Card>
         <CardContent className="space-y-4">
@@ -105,7 +114,7 @@ export function GenerateForm({
         </CardContent>
       </Card>
 
-      <SubmitButton className="w-full" size="lg">
+      <SubmitButton className="w-full" size="lg" disabled={notReadyCount > 0}>
         <Shuffle className="size-5" />
         Згенерувати команди
       </SubmitButton>

@@ -12,6 +12,7 @@ export default async function ContactsPage() {
       orderBy: [{ isLeader: "desc" }, { lastName: "asc" }],
       select: {
         id: true,
+        code: true,
         lastName: true,
         firstName: true,
         middleName: true,

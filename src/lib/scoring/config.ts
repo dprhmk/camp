@@ -1,42 +1,80 @@
 // Tunable weights for the scoring engine. Everything is data — change a number
 // here and the whole app (and its tests) follow. No magic numbers elsewhere.
+//
+// Two balanced scales:
+//   • physical — body metrics, sport and four motor traits;
+//   • mental ("розумова") — intellect, logic, creativity, communication.
+// Each raw score is normalised to 0..`scaleMax` so the two scales are directly
+// comparable and the team balancer treats them equally.
+
+export type Band = { min: number; value: number };
 
 export type ScoringConfig = {
+  scaleMax: number; // normalised ceiling for both scales (e.g. 10)
   physical: {
-    agilityWeight: number; // per agility point (1..3)
-    strengthWeight: number; // per strength point (1..3)
-    sportsBonus: number; // added when the child does sports
-    sportTypeBonus: number; // added when a specific sport is named
+    traitWeight: number; // per point of agility/strength/endurance/coordination
+    sportsBonus: number; // does sports
+    sportTypeBonus: number; // a specific sport is named
+    build: Record<string, number>; // body-composition factor (statura)
+    heightBands: Band[]; // cm -> contribution (sorted by min ascending)
+    weightBands: Band[]; // kg -> contribution
   };
   mental: {
-    drawingWeight: number; // per drawing point (1..3)
-    poetryWeight: number; // per poetry point (1..3)
-    musicianBonus: number; // added when the child plays an instrument
-    englishWeight: number; // per english level point (1..3)
-    generalWeight: number; // per general level point (1..3)
-    personality: Record<string, number>; // EXTROVERT/INTROVERT/AMBIVERT
-    exceptionalBonus: number; // added when flagged "exceptional"
-    firstTimePenalty: number; // subtracted when it is the child's first camp
-    panicPenalty: number; // subtracted when the child has panic attacks
+    traitWeight: number; // per point of intellect/logic/creativity/communication
   };
 };
 
 export const defaultScoringConfig: ScoringConfig = {
+  scaleMax: 10,
   physical: {
-    agilityWeight: 1,
-    strengthWeight: 1,
+    traitWeight: 1,
     sportsBonus: 1,
     sportTypeBonus: 0.5,
+    build: { SLIM: 0.5, AVERAGE: 1, ATHLETIC: 1.5, HEAVY: 1 },
+    heightBands: [
+      { min: 0, value: 0 },
+      { min: 130, value: 0.5 },
+      { min: 150, value: 1 },
+      { min: 165, value: 1.5 },
+    ],
+    weightBands: [
+      { min: 0, value: 0 },
+      { min: 35, value: 0.5 },
+      { min: 50, value: 1 },
+      { min: 65, value: 1.5 },
+    ],
   },
   mental: {
-    drawingWeight: 1,
-    poetryWeight: 1,
-    musicianBonus: 1,
-    englishWeight: 1,
-    generalWeight: 1,
-    personality: { EXTROVERT: 2, AMBIVERT: 1, INTROVERT: 0 },
-    exceptionalBonus: 1.5,
-    firstTimePenalty: 0.5,
-    panicPenalty: 0.5,
+    traitWeight: 1,
   },
 };
+
+/** Highest band whose `min` is <= value (bands sorted ascending). */
+export function bandValue(bands: Band[], value: number): number {
+  let out = 0;
+  for (const b of bands) {
+    if (value >= b.min) out = b.value;
+    else break;
+  }
+  return out;
+}
+
+const maxBand = (bands: Band[]) => bands.reduce((m, b) => Math.max(m, b.value), 0);
+
+/** Maximum possible RAW physical score (before normalisation). */
+export function physicalRawMax(config: ScoringConfig = defaultScoringConfig): number {
+  const p = config.physical;
+  return (
+    4 * 5 * p.traitWeight +
+    p.sportsBonus +
+    p.sportTypeBonus +
+    Math.max(0, ...Object.values(p.build)) +
+    maxBand(p.heightBands) +
+    maxBand(p.weightBands)
+  );
+}
+
+/** Maximum possible RAW mental score (before normalisation). */
+export function mentalRawMax(config: ScoringConfig = defaultScoringConfig): number {
+  return 4 * 5 * config.mental.traitWeight;
+}

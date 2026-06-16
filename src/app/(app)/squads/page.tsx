@@ -13,7 +13,7 @@ export default async function SquadsPage() {
   const canManageAny = can(user, "squad:manageAny");
   const canChangeLeader = can(user, "squad:changeLeader");
 
-  const [squads, leaders] = await Promise.all([
+  const [squads, leaders, traitAverages] = await Promise.all([
     prisma.squad.findMany({
       where: { campId: camp.id },
       orderBy: { name: "asc" },
@@ -26,10 +26,26 @@ export default async function SquadsPage() {
           select: { id: true, name: true },
         })
       : Promise.resolve([]),
+    // Per-squad average of every trait + both scales, for the team radar.
+    prisma.member.groupBy({
+      by: ["squadId"],
+      where: { campId: camp.id, squadId: { not: null } },
+      _avg: {
+        agility: true,
+        strength: true,
+        endurance: true,
+        coordination: true,
+        intellect: true,
+        logic: true,
+        creativity: true,
+        communication: true,
+        physicalScore: true,
+        mentalScore: true,
+      },
+    }),
   ]);
 
-  const maxTotal =
-    Math.max(1, ...squads.map((s) => s.totalPhysical + s.totalMental)) || 1;
+  const avgBySquad = new Map(traitAverages.map((a) => [a.squadId, a._avg]));
 
   return (
     <Container>
@@ -51,22 +67,34 @@ export default async function SquadsPage() {
         />
       ) : (
         <SquadsView
-          squads={squads.map((s) => ({
-            id: s.id,
-            name: s.name,
-            color: s.color,
-            leaderUserId: s.leaderUserId,
-            leaderName: s.leaderName,
-            assistantName: s.assistantName,
-            totalPhysical: s.totalPhysical,
-            totalMental: s.totalMental,
-            members: s._count.members,
-            canManage: canManageSquad(user, s),
-          }))}
+          squads={squads.map((s) => {
+            const avg = avgBySquad.get(s.id);
+            return {
+              id: s.id,
+              name: s.name,
+              color: s.color,
+              leaderUserId: s.leaderUserId,
+              leaderName: s.leaderName,
+              assistantName: s.assistantName,
+              members: s._count.members,
+              canManage: canManageSquad(user, s),
+              physicalScore: avg?.physicalScore ?? 0,
+              mentalScore: avg?.mentalScore ?? 0,
+              traits: {
+                agility: avg?.agility ?? 0,
+                strength: avg?.strength ?? 0,
+                endurance: avg?.endurance ?? 0,
+                coordination: avg?.coordination ?? 0,
+                intellect: avg?.intellect ?? 0,
+                logic: avg?.logic ?? 0,
+                creativity: avg?.creativity ?? 0,
+                communication: avg?.communication ?? 0,
+              },
+            };
+          })}
           leaders={leaders}
           canChangeLeader={canChangeLeader}
           canDelete={canManageAny}
-          maxTotal={maxTotal}
         />
       )}
     </Container>

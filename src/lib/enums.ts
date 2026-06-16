@@ -43,11 +43,13 @@ export const PERSONALITY_OPTIONS: Option[] = [
   { value: "AMBIVERT", label: "Амбіверт" },
 ];
 
-// 1..3 scales used across the profile.
+// 1..5 scales used across the profile.
 export const SCALE_OPTIONS: Option[] = [
-  { value: "1", label: "1 — низький" },
-  { value: "2", label: "2 — середній" },
-  { value: "3", label: "3 — високий" },
+  { value: "1", label: "1 — дуже низький" },
+  { value: "2", label: "2 — низький" },
+  { value: "3", label: "3 — середній" },
+  { value: "4", label: "4 — високий" },
+  { value: "5", label: "5 — дуже високий" },
 ];
 
 /** Look up a label by value within an option list (falls back to the value). */
@@ -55,6 +57,26 @@ export function labelOf(options: Option[], value: string | null | undefined): st
   if (!value) return "—";
   return options.find((o) => o.value === value)?.label ?? value;
 }
+
+// Labels for the two balanced score scales.
+export const DIMENSION_LABELS: Record<string, string> = {
+  physicalScore: "Фізична",
+  mentalScore: "Розумова",
+};
+
+// Individual traits shown as radar axes (each 1..5), grouped by scale.
+export const RADAR_TRAITS = [
+  { key: "agility", label: "Спритність", group: "physical" },
+  { key: "strength", label: "Сила", group: "physical" },
+  { key: "endurance", label: "Витривалість", group: "physical" },
+  { key: "coordination", label: "Координація", group: "physical" },
+  { key: "intellect", label: "Інтелект", group: "mental" },
+  { key: "logic", label: "Логіка", group: "mental" },
+  { key: "creativity", label: "Творчість", group: "mental" },
+  { key: "communication", label: "Комунікація", group: "mental" },
+] as const;
+
+export type TraitKey = (typeof RADAR_TRAITS)[number]["key"];
 
 // Preset squad colors (mobile-friendly, high-contrast).
 export const SQUAD_COLORS = [

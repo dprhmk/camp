@@ -38,6 +38,17 @@ export async function generateTeamsAction(
     return { ok: false, message: "У таборі ще немає учасників для розподілу" };
   }
 
+  // Block until every member is ready — otherwise the balance would be unfair.
+  const notReady = await prisma.member.count({
+    where: { campId: camp.id, isProfileComplete: false },
+  });
+  if (notReady > 0) {
+    return {
+      ok: false,
+      message: `${notReady} ${notReady === 1 ? "учасник має" : "учасників мають"} незаповнену анкету. Заповніть характеристики всіх учасників перед розподілом.`,
+    };
+  }
+
   // Resolve selected leader accounts -> { id, name } so we can set both the
   // account binding and the display name on each new squad.
   const chosenIds = [...new Set(leaderUserIds.filter(Boolean))];
