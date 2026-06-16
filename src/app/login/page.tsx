@@ -1,6 +1,13 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
 import { LoginForm } from "./login-form";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Only skip the login form for a genuinely valid session. A stale cookie
+  // (e.g. after a DB reseed) resolves to null here, so the form is shown
+  // instead of looping back to "/".
+  if (await getCurrentUser()) redirect("/");
+
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-5 py-10">
       <div className="w-full max-w-sm">
