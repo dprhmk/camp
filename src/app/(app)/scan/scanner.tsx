@@ -51,6 +51,19 @@ export function Scanner() {
   async function start() {
     setCameraError(null);
     setLookupError(null);
+
+    // The camera API is only available in a secure context (HTTPS or
+    // localhost). On a phone opening the app over http://<lan-ip> Safari/Chrome
+    // hide navigator.mediaDevices entirely — explain it instead of failing mutely.
+    const hasCameraApi =
+      typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+    if (!hasCameraApi) {
+      setCameraError(
+        "Камера доступна лише через захищене зʼєднання (HTTPS). Зараз сайт відкрито по HTTP, тому скан недоступний — введіть код вручну нижче, або відкрийте додаток за адресою https://…",
+      );
+      return;
+    }
+
     setScanning(true);
     try {
       const reader = new BrowserMultiFormatReader();
@@ -66,7 +79,9 @@ export function Scanner() {
       );
     } catch {
       setScanning(false);
-      setCameraError("Немає доступу до камери. Дозвольте доступ або введіть код вручну нижче.");
+      setCameraError(
+        "Не вдалося увімкнути камеру. Дозвольте доступ до камери в браузері або введіть код вручну нижче.",
+      );
     }
   }
 
