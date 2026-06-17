@@ -19,6 +19,7 @@ export function PhotoUpload({
 }) {
   const [url, setUrl] = React.useState<string | null>(defaultUrl ?? null);
   const [uploading, setUploading] = React.useState(false);
+  const [zoom, setZoom] = React.useState(false);
   const toast = useToast();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -51,8 +52,15 @@ export function PhotoUpload({
       <input type="hidden" name={name} value={url ?? ""} />
       <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt="Фото учасника" className="size-full object-cover" />
+          <button
+            type="button"
+            onClick={() => setZoom(true)}
+            className="size-full"
+            aria-label="Переглянути фото"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="Фото учасника" className="size-full object-cover" />
+          </button>
         ) : (
           <div className="flex size-full items-center justify-center text-slate-300">
             <ImagePlus className="size-8" />
@@ -64,6 +72,27 @@ export function PhotoUpload({
           </div>
         )}
       </div>
+
+      {/* Fullscreen preview */}
+      {zoom && url && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setZoom(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={() => setZoom(false)}
+            className="absolute right-4 top-4 rounded-full bg-white/15 p-2 text-white"
+            aria-label="Закрити"
+          >
+            <X className="size-6" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="Фото учасника" className="max-h-full max-w-full rounded-xl object-contain" />
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <input

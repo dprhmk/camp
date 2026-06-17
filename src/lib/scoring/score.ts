@@ -1,28 +1,14 @@
-import {
-  bandValue,
-  defaultScoringConfig,
-  mentalRawMax,
-  physicalRawMax,
-  type ScoringConfig,
-} from "./config";
+import { defaultScoringConfig, mentalRawMax, physicalRawMax, type ScoringConfig } from "./config";
 
 // The subset of member profile fields that feed the scores. Kept deliberately
 // narrow so the scoring engine stays a pure, easily-tested function.
 export type ScorableMember = {
   // Physical
-  agility?: number | null;
-  strength?: number | null;
-  endurance?: number | null;
-  coordination?: number | null;
+  height?: string | null; // "LOW" | "MEDIUM" | "HIGH"
+  build?: string | null; // "SLIM" | "AVERAGE" | "HEAVY"
   doesSports?: boolean | null;
-  sportType?: string | null;
-  height?: number | null;
-  weight?: number | null;
-  build?: string | null;
 
-  // Mental ("розумова")
-  intellect?: number | null;
-  logic?: number | null;
+  // Mental ("розумова / креативна"), 1..5
   creativity?: number | null;
   communication?: number | null;
 };
@@ -30,32 +16,27 @@ export type ScorableMember = {
 const num = (v: number | null | undefined) => (typeof v === "number" ? v : 0);
 const round = (v: number) => Math.round(v * 100) / 100;
 
-/** Physical score, normalised to 0..scaleMax. */
+/** Physical score: height level + build + sports, normalised to 0..scaleMax. */
 export function computePhysicalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
   const c = config.physical;
-  let raw =
-    (num(m.agility) + num(m.strength) + num(m.endurance) + num(m.coordination)) * c.traitWeight;
-  if (m.doesSports) raw += c.sportsBonus;
-  if (m.sportType && m.sportType.trim()) raw += c.sportTypeBonus;
+  let raw = 0;
+  if (m.height && c.height[m.height] != null) raw += c.height[m.height];
   if (m.build && c.build[m.build] != null) raw += c.build[m.build];
-  if (m.height) raw += bandValue(c.heightBands, m.height);
-  if (m.weight) raw += bandValue(c.weightBands, m.weight);
+  if (m.doesSports) raw += c.sportsBonus;
 
   const max = physicalRawMax(config);
   return round(Math.max(0, (raw / max) * config.scaleMax));
 }
 
-/** Mental ("розумова") score, normalised to 0..scaleMax. */
+/** Mental score: creativity + communication, normalised to 0..scaleMax. */
 export function computeMentalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
-  const raw =
-    (num(m.intellect) + num(m.logic) + num(m.creativity) + num(m.communication)) *
-    config.mental.traitWeight;
+  const raw = (num(m.creativity) + num(m.communication)) * config.mental.traitWeight;
   const max = mentalRawMax(config);
   return round(Math.max(0, (raw / max) * config.scaleMax));
 }

@@ -103,16 +103,16 @@ model Member {
   physicalScore Float @default(0)
   mentalScore   Float @default(0) // "розумова" — intellect, logic, creativity, communication
 
-  // --- Basic (all optional; "ready for distribution" enforced in app) ------
+  // --- Basic ---------------------------------------------------------------
   lastName      String?
   firstName     String?
   middleName    String?
   dateOfBirth   DateTime?
   gender        String?   // "MALE" | "FEMALE"
-  residenceType String?   // "BUILDING" | "TENT" | "HOME"
+  residenceType String?   // "BUILDING" | "HOME"
   photoUrl      String?
 
-  // --- Contacts ------------------------------------------------------------
+  // --- Contacts (all optional) ---------------------------------------------
   childPhone        String?
   guardianName      String?
   parentsPhone      String?
@@ -122,32 +122,21 @@ model Member {
   otherSocial       String?
   address           String?
 
-  // --- Physical: body metrics, sport and four motor traits (1..5) ----------
-  height       Int?    // cm
-  weight       Int?    // kg
-  build        String? // "SLIM" | "AVERAGE" | "ATHLETIC" | "HEAVY"
-  doesSports   Boolean @default(false)
-  sportType    String?
-  agility      Int?    // 1..5
-  strength     Int?    // 1..5
-  endurance    Int?    // 1..5
-  coordination Int?    // 1..5
+  // --- Physical (feeds the physical scale) ---------------------------------
+  height     String? // "LOW" | "MEDIUM" | "HIGH"
+  build      String? // "SLIM" | "AVERAGE" | "HEAVY"
+  doesSports Boolean @default(false)
 
-  // --- Mental ("розумова"): four traits (1..5) -----------------------------
-  intellect     Int? // 1..5
-  logic         Int? // 1..5
-  creativity    Int? // 1..5
-  communication Int? // 1..5
+  // --- Mental / creative (feeds the mental scale), 1..5 --------------------
+  creativity    Int?
+  communication Int?
 
   // --- Medical & notes (profile info, not scored) --------------------------
   allergies            String?
   medicalRestrictions  String?
   physicalRestrictions String?
   medicalNotes         String?
-  personalityType      String? // "EXTROVERT" | "INTROVERT" | "AMBIVERT"
-  firstTimeAtCamp      Boolean @default(false)
-  isExceptional        Boolean @default(false)
-  panicAttacks         Boolean @default(false)
+  isExceptional        Boolean @default(false) // "Особливий"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -9,7 +9,7 @@ import { Container, PageHeader } from "@/components/layout/page-header";
 import { Alert } from "@/components/ui/feedback";
 import { Card, CardContent } from "@/components/ui/card";
 import { displayName } from "@/lib/utils";
-import { StatsRadar } from "@/components/stats-radar";
+import { StatsScales } from "@/components/stats-scales";
 import { MemberForm } from "../member-form";
 import { ProfileView } from "../profile-view";
 import { DeleteMemberButton } from "./delete-member";
@@ -72,11 +72,7 @@ export default async function MemberPage({
 
       <Card className="mb-4">
         <CardContent>
-          <StatsRadar
-            traits={member}
-            physicalScore={member.physicalScore}
-            mentalScore={member.mentalScore}
-          />
+          <StatsScales physicalScore={member.physicalScore} mentalScore={member.mentalScore} />
         </CardContent>
       </Card>
 

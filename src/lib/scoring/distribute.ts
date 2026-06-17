@@ -2,8 +2,7 @@
 //
 // Goal: split all members across N squads so that (a) squad sizes differ by at
 // most one and (b) the summed physical and mental scores are as even as
-// possible — no squad ends up "stronger" on either scale. Because body metrics
-// feed the physical score, height/weight get balanced too.
+// possible — no squad ends up "stronger" on either scale.
 //
 // Strategy: greedy LPT (longest-processing-time-first). Sort members by their
 // combined score descending, then place each into the least-loaded squad that

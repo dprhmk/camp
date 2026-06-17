@@ -9,36 +9,27 @@ export function isProfileComplete(m: Partial<MemberInput>): boolean {
   const filled = (v: unknown) =>
     v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v));
 
-  return DISTRIBUTION_FIELDS.every((key) => filled(m[key]));
+  return COMPLETE_FIELDS.every((key) => filled(m[key]));
 }
 
 /**
- * Fields required for fair team distribution (the inputs to the four score
- * dimensions). A member is "ready" only when all of these are filled — the
- * "Generate teams" screen blocks until every member is ready.
+ * Fields that make a profile "ready for distribution": identity + the inputs to
+ * both score scales. The "Generate teams" screen blocks until every member is
+ * ready, and the members list shows incomplete ones in red.
  */
-export const DISTRIBUTION_FIELDS: (keyof MemberInput)[] = [
-  // Physical
-  "agility",
-  "strength",
-  "endurance",
-  "coordination",
+export const COMPLETE_FIELDS: (keyof MemberInput)[] = [
+  "lastName",
+  "firstName",
+  "dateOfBirth",
+  "gender",
+  "residenceType",
+  // Physical scale inputs
   "height",
-  "weight",
   "build",
-  // Mental ("розумова")
-  "intellect",
-  "logic",
+  // Mental scale inputs
   "creativity",
   "communication",
 ];
-
-/** Which distribution fields are still missing on a member. */
-export function missingDistributionFields(m: Partial<MemberInput>): (keyof MemberInput)[] {
-  const filled = (v: unknown) =>
-    v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v));
-  return DISTRIBUTION_FIELDS.filter((key) => !filled(m[key]));
-}
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I
 

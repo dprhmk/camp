@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BUILD_OPTIONS, GENDER_OPTIONS, PERSONALITY_OPTIONS, RESIDENCE_OPTIONS, ROLES } from "./enums";
+import { BUILD_OPTIONS, GENDER_OPTIONS, HEIGHT_OPTIONS, RESIDENCE_OPTIONS, ROLES } from "./enums";
 
 // Empty form fields arrive as "" — treat them as "not provided".
 const optionalText = z
@@ -16,18 +16,13 @@ const scale = z
   .optional()
   .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
 
-// An optional positive integer within a range (e.g. height, weight).
-const optionalInt = (min: number, max: number, msg: string) =>
+// A required select: empty -> message; must be one of the allowed values.
+const requiredOneOf = (values: readonly string[], message: string) =>
   z
-    .union([z.literal(""), z.coerce.number().int().min(min, msg).max(max, msg)])
-    .optional()
-    .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
-
-const oneOf = (values: readonly string[]) =>
-  z
-    .union([z.literal(""), z.enum(values as [string, ...string[]])])
-    .optional()
-    .transform((v) => (v ? v : undefined));
+    .string()
+    .trim()
+    .min(1, message)
+    .refine((v) => values.includes(v), message);
 
 const boolish = z
   .union([z.boolean(), z.literal("on"), z.literal("true"), z.literal("false"), z.undefined()])
@@ -110,16 +105,16 @@ export const generateSchema = z.object({
 // --- Member (the big profile) ---------------------------------------------
 
 export const memberSchema = z.object({
-  // Basic — all optional on save; "ready for distribution" is enforced separately.
-  lastName: optionalText,
-  firstName: optionalText,
+  // Basic — name + identity required; middle name optional.
+  lastName: requiredText("Введіть прізвище"),
+  firstName: requiredText("Введіть імʼя"),
   middleName: optionalText,
-  dateOfBirth: optionalText,
-  gender: oneOf(GENDER_OPTIONS.map((o) => o.value)),
-  residenceType: oneOf(RESIDENCE_OPTIONS.map((o) => o.value)),
+  dateOfBirth: requiredText("Оберіть дату народження"),
+  gender: requiredOneOf(GENDER_OPTIONS.map((o) => o.value), "Оберіть стать"),
+  residenceType: requiredOneOf(RESIDENCE_OPTIONS.map((o) => o.value), "Оберіть тип проживання"),
   photoUrl: optionalText,
 
-  // Contacts
+  // Contacts — all optional.
   childPhone: optionalText,
   guardianName: optionalText,
   parentsPhone: optionalText,
@@ -129,32 +124,21 @@ export const memberSchema = z.object({
   otherSocial: optionalText,
   address: optionalText,
 
-  // Physical: body metrics, sport and four motor traits (1..5)
-  height: optionalInt(50, 250, "Від 50 до 250 см"),
-  weight: optionalInt(10, 200, "Від 10 до 200 кг"),
-  build: oneOf(BUILD_OPTIONS.map((o) => o.value)),
+  // Physical — required: height level + build; plus the "does sports" flag.
+  height: requiredOneOf(HEIGHT_OPTIONS.map((o) => o.value), "Оберіть зріст"),
+  build: requiredOneOf(BUILD_OPTIONS.map((o) => o.value), "Оберіть статуру"),
   doesSports: boolish,
-  sportType: optionalText,
-  agility: scale,
-  strength: scale,
-  endurance: scale,
-  coordination: scale,
 
-  // Mental ("розумова"): four traits (1..5)
-  intellect: scale,
-  logic: scale,
+  // Mental ("розумова / креативна") — two scored traits (1..5).
   creativity: scale,
   communication: scale,
 
-  // Medical & notes (profile info, not scored)
+  // Medical & notes (profile info, not scored).
   allergies: optionalText,
   medicalRestrictions: optionalText,
   physicalRestrictions: optionalText,
   medicalNotes: optionalText,
-  personalityType: oneOf(PERSONALITY_OPTIONS.map((o) => o.value)),
-  firstTimeAtCamp: boolish,
-  isExceptional: boolish,
-  panicAttacks: boolish,
+  isExceptional: boolish, // "Особливий"
 
   // System
   squadId: optionalText,

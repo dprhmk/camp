@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeMentalScore, computePhysicalScore, computeScores } from "./score";
 import { distributeMembers, type DistributableMember } from "./distribute";
-import { bandValue, defaultScoringConfig, mentalRawMax, physicalRawMax } from "./config";
+import { defaultScoringConfig, mentalRawMax, physicalRawMax } from "./config";
 
 describe("computePhysicalScore", () => {
   it("is zero for an empty profile", () => {
@@ -9,32 +9,17 @@ describe("computePhysicalScore", () => {
   });
 
   it("reaches the scale ceiling when everything is maxed", () => {
-    expect(
-      computePhysicalScore({
-        agility: 5,
-        strength: 5,
-        endurance: 5,
-        coordination: 5,
-        doesSports: true,
-        sportType: "Футбол",
-        build: "ATHLETIC",
-        height: 200,
-        weight: 90,
-      }),
-    ).toBe(10);
+    expect(computePhysicalScore({ height: "HIGH", build: "AVERAGE", doesSports: true })).toBe(10);
   });
 
-  it("normalises the four motor traits against the raw max", () => {
-    // 20 raw out of 26 -> 7.69
-    const expected = Math.round(((20 / physicalRawMax()) * 10) * 100) / 100;
-    expect(
-      computePhysicalScore({ agility: 5, strength: 5, endurance: 5, coordination: 5 }),
-    ).toBe(expected);
+  it("normalises against the raw max", () => {
+    // MEDIUM(2) + SLIM(1) = 3 of 7 -> 4.29
+    const expected = Math.round(((3 / physicalRawMax()) * 10) * 100) / 100;
+    expect(computePhysicalScore({ height: "MEDIUM", build: "SLIM" })).toBe(expected);
   });
 
-  it("respects a custom config", () => {
-    const config = { ...defaultScoringConfig, scaleMax: 100 };
-    expect(computePhysicalScore({}, config)).toBe(0);
+  it("ignores unknown values", () => {
+    expect(computePhysicalScore({ height: "???", build: "???" })).toBe(0);
   });
 });
 
@@ -43,52 +28,38 @@ describe("computeMentalScore", () => {
     expect(computeMentalScore({})).toBe(0);
   });
 
-  it("reaches the ceiling when all four traits are maxed", () => {
-    expect(
-      computeMentalScore({ intellect: 5, logic: 5, creativity: 5, communication: 5 }),
-    ).toBe(10);
+  it("reaches the ceiling when both traits are maxed", () => {
+    expect(computeMentalScore({ creativity: 5, communication: 5 })).toBe(10);
   });
 
   it("is half the ceiling for half the points", () => {
-    // 10 of 20 -> 5
-    expect(computeMentalScore({ intellect: 5, logic: 5 })).toBe(5);
+    expect(computeMentalScore({ creativity: 5 })).toBe(5);
   });
 });
 
 describe("raw maxima", () => {
   it("computes the physical and mental raw ceilings", () => {
-    expect(physicalRawMax()).toBe(26);
-    expect(mentalRawMax()).toBe(20);
+    expect(physicalRawMax()).toBe(7); // height 3 + build 2 + sports 2
+    expect(mentalRawMax()).toBe(10); // 2 traits × 5
   });
-});
 
-describe("bandValue", () => {
-  it("returns the highest band whose min is reached", () => {
-    const bands = defaultScoringConfig.physical.heightBands;
-    expect(bandValue(bands, 120)).toBe(0);
-    expect(bandValue(bands, 135)).toBe(0.5);
-    expect(bandValue(bands, 200)).toBe(1.5);
+  it("scales with scaleMax", () => {
+    const config = { ...defaultScoringConfig, scaleMax: 100 };
+    expect(computeMentalScore({ creativity: 5, communication: 5 }, config)).toBe(100);
   });
 });
 
 describe("computeScores", () => {
   it("returns both balanced scales", () => {
-    const s = computeScores({
-      agility: 5,
-      strength: 5,
-      endurance: 5,
-      coordination: 5,
-      doesSports: true,
-      sportType: "x",
-      build: "ATHLETIC",
-      height: 200,
-      weight: 90,
-      intellect: 5,
-      logic: 5,
-      creativity: 5,
-      communication: 5,
-    });
-    expect(s).toEqual({ physicalScore: 10, mentalScore: 10 });
+    expect(
+      computeScores({
+        height: "HIGH",
+        build: "AVERAGE",
+        doesSports: true,
+        creativity: 5,
+        communication: 5,
+      }),
+    ).toEqual({ physicalScore: 10, mentalScore: 10 });
   });
 });
 
@@ -113,10 +84,8 @@ describe("distributeMembers", () => {
 
   it("balances the combined load within one member's weight (LPT guarantee)", () => {
     const { squads } = distributeMembers(make(80), 5);
-    const combinedTotals = squads.map((s) => s.totalPhysical + s.totalMental);
-    const spread = Math.max(...combinedTotals) - Math.min(...combinedTotals);
-    // LPT bounds the combined-load spread by the heaviest single member (<= 10 here).
-    expect(spread).toBeLessThanOrEqual(10);
+    const totals = squads.map((s) => s.totalPhysical + s.totalMental);
+    expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(10);
   });
 
   it("is deterministic", () => {

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { StatsRadar } from "@/components/stats-radar";
+import { StatsScales } from "@/components/stats-scales";
 import { SQUAD_COLORS } from "@/lib/enums";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,6 @@ type Squad = {
   canManage: boolean;
   physicalScore: number; // average per member
   mentalScore: number;
-  traits: Record<string, number>;
 };
 type Leader = { id: string; name: string };
 
@@ -83,13 +82,7 @@ export function SquadsView({
               )}
             </div>
 
-            <StatsRadar
-              width={280}
-              color={s.color}
-              traits={s.traits}
-              physicalScore={s.physicalScore}
-              mentalScore={s.mentalScore}
-            />
+            <StatsScales physicalScore={s.physicalScore} mentalScore={s.mentalScore} />
           </CardContent>
         </Card>
       ))}

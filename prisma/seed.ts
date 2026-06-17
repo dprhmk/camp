@@ -11,10 +11,9 @@ import { SQUAD_COLORS } from "../src/lib/enums";
 const prisma = new PrismaClient();
 
 const GENDERS = ["MALE", "FEMALE"];
-const RESIDENCE = ["BUILDING", "TENT", "HOME"];
-const BUILD = ["SLIM", "AVERAGE", "ATHLETIC", "HEAVY"];
-const PERSONALITY = ["EXTROVERT", "INTROVERT", "AMBIVERT"];
-const SPORTS = ["Футбол", "Волейбол", "Плавання", "Біг", ""];
+const RESIDENCE = ["BUILDING", "HOME"];
+const HEIGHTS = ["LOW", "MEDIUM", "HIGH"];
+const BUILD = ["SLIM", "AVERAGE", "HEAVY"];
 const LAST = ["Шевченко", "Коваленко", "Бондаренко", "Ткаченко", "Кравчук", "Мельник", "Поліщук", "Савченко", "Руденко", "Левченко"];
 const MALE_NAMES = ["Андрій", "Богдан", "Іван", "Максим", "Назар", "Олег", "Петро", "Тарас"];
 const FEMALE_NAMES = ["Анна", "Дарина", "Катерина", "Марія", "Олена", "Софія", "Юлія", "Ярина"];
@@ -125,27 +124,16 @@ async function main() {
 
     const profile = {
       gender,
-      // Body metrics are objective — always recorded.
-      height: 120 + Math.floor(rnd() * 60), // 120..179 cm
-      weight: 25 + Math.floor(rnd() * 45), // 25..69 kg
+      residenceType: pick(RESIDENCE),
+      // Physical scale inputs (objective — always recorded).
+      height: pick(HEIGHTS),
       build: pick(BUILD),
       doesSports: chance(0.5),
-      sportType: pick(SPORTS) || null,
-      // Physical traits (1..5)
-      agility: complete ? scale() : null,
-      strength: complete ? scale() : null,
-      endurance: complete ? scale() : null,
-      coordination: complete ? scale() : null,
-      // Mental ("розумова") traits (1..5)
-      intellect: complete ? scale() : null,
-      logic: complete ? scale() : null,
+      // Mental ("розумова / креативна") scale inputs (1..5).
       creativity: complete ? scale() : null,
       communication: complete ? scale() : null,
-      // Profile info (not scored)
-      personalityType: complete ? pick(PERSONALITY) : null,
+      // Profile flag (not scored).
       isExceptional: chance(0.15),
-      firstTimeAtCamp: chance(0.4),
-      panicAttacks: chance(0.1),
     };
 
     const scores = computeScores(profile);
@@ -161,7 +149,6 @@ async function main() {
         lastName,
         firstName,
         dateOfBirth: dob,
-        residenceType: pick(RESIDENCE),
         childPhone: chance(0.5) ? "+38067" + Math.floor(1000000 + rnd() * 8999999) : null,
         parentsPhone: "+38050" + Math.floor(1000000 + rnd() * 8999999),
         guardianName: `${lastName} ${gender === "MALE" ? "Олена" : "Сергій"}`,

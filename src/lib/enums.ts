@@ -23,27 +23,28 @@ export const GENDER_OPTIONS: Option[] = [
   { value: "FEMALE", label: "Дівчина" },
 ];
 
-// NOTE: "тип проживання" values are an assumption — confirm with the customer.
+// Тип проживання — only two options.
 export const RESIDENCE_OPTIONS: Option[] = [
   { value: "BUILDING", label: "У корпусі" },
-  { value: "TENT", label: "У наметі" },
   { value: "HOME", label: "Удома (приходить)" },
 ];
 
+// Зріст — a coarse level (was a numeric cm field).
+export const HEIGHT_OPTIONS: Option[] = [
+  { value: "LOW", label: "Низький" },
+  { value: "MEDIUM", label: "Середній" },
+  { value: "HIGH", label: "Високий" },
+];
+export const HEIGHT_DEFAULT = "MEDIUM";
+
+// Статура — three options.
 export const BUILD_OPTIONS: Option[] = [
   { value: "SLIM", label: "Худорлява" },
   { value: "AVERAGE", label: "Середня" },
-  { value: "ATHLETIC", label: "Спортивна" },
-  { value: "HEAVY", label: "Щільна" },
+  { value: "HEAVY", label: "Повна" },
 ];
 
-export const PERSONALITY_OPTIONS: Option[] = [
-  { value: "EXTROVERT", label: "Екстраверт" },
-  { value: "INTROVERT", label: "Інтроверт" },
-  { value: "AMBIVERT", label: "Амбіверт" },
-];
-
-// 1..5 scales used across the profile.
+// 1..5 scales used by the scored profile traits (creativity, communication).
 export const SCALE_OPTIONS: Option[] = [
   { value: "1", label: "1 — дуже низький" },
   { value: "2", label: "2 — низький" },
@@ -57,26 +58,6 @@ export function labelOf(options: Option[], value: string | null | undefined): st
   if (!value) return "—";
   return options.find((o) => o.value === value)?.label ?? value;
 }
-
-// Labels for the two balanced score scales.
-export const DIMENSION_LABELS: Record<string, string> = {
-  physicalScore: "Фізична",
-  mentalScore: "Розумова",
-};
-
-// Individual traits shown as radar axes (each 1..5), grouped by scale.
-export const RADAR_TRAITS = [
-  { key: "agility", label: "Спритність", group: "physical" },
-  { key: "strength", label: "Сила", group: "physical" },
-  { key: "endurance", label: "Витривалість", group: "physical" },
-  { key: "coordination", label: "Координація", group: "physical" },
-  { key: "intellect", label: "Інтелект", group: "mental" },
-  { key: "logic", label: "Логіка", group: "mental" },
-  { key: "creativity", label: "Творчість", group: "mental" },
-  { key: "communication", label: "Комунікація", group: "mental" },
-] as const;
-
-export type TraitKey = (typeof RADAR_TRAITS)[number]["key"];
 
 // Preset squad colors (mobile-friendly, high-contrast).
 export const SQUAD_COLORS = [

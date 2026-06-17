@@ -26,22 +26,11 @@ export default async function SquadsPage() {
           select: { id: true, name: true },
         })
       : Promise.resolve([]),
-    // Per-squad average of every trait + both scales, for the team radar.
+    // Per-squad average of both scales, for the team gauges.
     prisma.member.groupBy({
       by: ["squadId"],
       where: { campId: camp.id, squadId: { not: null } },
-      _avg: {
-        agility: true,
-        strength: true,
-        endurance: true,
-        coordination: true,
-        intellect: true,
-        logic: true,
-        creativity: true,
-        communication: true,
-        physicalScore: true,
-        mentalScore: true,
-      },
+      _avg: { physicalScore: true, mentalScore: true },
     }),
   ]);
 
@@ -80,16 +69,6 @@ export default async function SquadsPage() {
               canManage: canManageSquad(user, s),
               physicalScore: avg?.physicalScore ?? 0,
               mentalScore: avg?.mentalScore ?? 0,
-              traits: {
-                agility: avg?.agility ?? 0,
-                strength: avg?.strength ?? 0,
-                endurance: avg?.endurance ?? 0,
-                coordination: avg?.coordination ?? 0,
-                intellect: avg?.intellect ?? 0,
-                logic: avg?.logic ?? 0,
-                creativity: avg?.creativity ?? 0,
-                communication: avg?.communication ?? 0,
-              },
             };
           })}
           leaders={leaders}

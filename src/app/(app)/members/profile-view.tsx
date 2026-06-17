@@ -4,7 +4,7 @@ import { formatDate } from "@/lib/utils";
 import {
   BUILD_OPTIONS,
   GENDER_OPTIONS,
-  PERSONALITY_OPTIONS,
+  HEIGHT_OPTIONS,
   RESIDENCE_OPTIONS,
   labelOf,
 } from "@/lib/enums";
@@ -55,20 +55,12 @@ export function ProfileView({ m }: { m: Member }) {
       </Group>
 
       <Group title="Фізичне">
-        <Row label="Зріст, см" value={num(m.height)} />
-        <Row label="Вага, кг" value={num(m.weight)} />
+        <Row label="Зріст" value={labelOf(HEIGHT_OPTIONS, m.height)} />
         <Row label="Статура" value={labelOf(BUILD_OPTIONS, m.build)} />
         <Row label="Займається спортом" value={yn(m.doesSports)} />
-        <Row label="Вид спорту" value={text(m.sportType)} />
-        <Row label="Спритність" value={num(m.agility)} />
-        <Row label="Сила" value={num(m.strength)} />
-        <Row label="Витривалість" value={num(m.endurance)} />
-        <Row label="Координація" value={num(m.coordination)} />
       </Group>
 
       <Group title="Розумова">
-        <Row label="Інтелект" value={num(m.intellect)} />
-        <Row label="Логіка" value={num(m.logic)} />
         <Row label="Творчість" value={num(m.creativity)} />
         <Row label="Комунікація" value={num(m.communication)} />
       </Group>
@@ -78,10 +70,7 @@ export function ProfileView({ m }: { m: Member }) {
         <Row label="Медичні обмеження" value={text(m.medicalRestrictions)} />
         <Row label="Фізичні обмеження" value={text(m.physicalRestrictions)} />
         <Row label="Нотатки" value={text(m.medicalNotes)} />
-        <Row label="Тип особистості" value={labelOf(PERSONALITY_OPTIONS, m.personalityType)} />
-        <Row label="Перший раз у таборі" value={yn(m.firstTimeAtCamp)} />
-        <Row label="Винятковий" value={yn(m.isExceptional)} />
-        <Row label="Панічні атаки" value={yn(m.panicAttacks)} />
+        <Row label="Особливий" value={yn(m.isExceptional)} />
       </Group>
     </div>
   );

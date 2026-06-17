@@ -13,7 +13,8 @@ import { useToast } from "@/components/ui/toast";
 import {
   BUILD_OPTIONS,
   GENDER_OPTIONS,
-  PERSONALITY_OPTIONS,
+  HEIGHT_DEFAULT,
+  HEIGHT_OPTIONS,
   RESIDENCE_OPTIONS,
   SCALE_OPTIONS,
   type Option,
@@ -56,14 +57,20 @@ export function MemberForm({
       <Section title="Основне">
         <PhotoUpload name="photoUrl" defaultUrl={str(values.photoUrl) || null} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Text name="lastName" label="Прізвище" def={values.lastName} err={err.lastName} />
-          <Text name="firstName" label="Імʼя" def={values.firstName} err={err.firstName} />
+          <Text name="lastName" label="Прізвище" required def={values.lastName} err={err.lastName} />
+          <Text name="firstName" label="Імʼя" required def={values.firstName} err={err.firstName} />
           <Text name="middleName" label="По батькові" def={values.middleName} err={err.middleName} />
-          <Field label="Дата народження" htmlFor="dateOfBirth" error={err.dateOfBirth}>
-            <Input id="dateOfBirth" name="dateOfBirth" type="date" defaultValue={str(values.dateOfBirth).slice(0, 10)} />
+          <Field label="Дата народження" htmlFor="dateOfBirth" required error={err.dateOfBirth}>
+            <Input
+              id="dateOfBirth"
+              name="dateOfBirth"
+              type="date"
+              defaultValue={str(values.dateOfBirth).slice(0, 10)}
+              aria-invalid={!!err.dateOfBirth}
+            />
           </Field>
-          <SelectField name="gender" label="Стать" options={GENDER_OPTIONS} def={values.gender} err={err.gender} />
-          <SelectField name="residenceType" label="Тип проживання" options={RESIDENCE_OPTIONS} def={values.residenceType} err={err.residenceType} />
+          <SelectField name="gender" label="Стать" required options={GENDER_OPTIONS} def={values.gender} err={err.gender} />
+          <SelectField name="residenceType" label="Тип проживання" required options={RESIDENCE_OPTIONS} def={values.residenceType} err={err.residenceType} />
         </div>
       </Section>
 
@@ -82,26 +89,22 @@ export function MemberForm({
 
       <Section title="Фізичне">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Зріст, см" htmlFor="height" error={err.height}>
-            <Input id="height" name="height" type="number" inputMode="numeric" defaultValue={str(values.height)} aria-invalid={!!err.height} />
-          </Field>
-          <Field label="Вага, кг" htmlFor="weight" error={err.weight}>
-            <Input id="weight" name="weight" type="number" inputMode="numeric" defaultValue={str(values.weight)} aria-invalid={!!err.weight} />
-          </Field>
-          <SelectField name="build" label="Статура" options={BUILD_OPTIONS} def={values.build} err={err.build} />
-          <Text name="sportType" label="Вид спорту" def={values.sportType} err={err.sportType} />
-          <ScaleField name="agility" label="Спритність" def={values.agility} err={err.agility} />
-          <ScaleField name="strength" label="Сила" def={values.strength} err={err.strength} />
-          <ScaleField name="endurance" label="Витривалість" def={values.endurance} err={err.endurance} />
-          <ScaleField name="coordination" label="Координація" def={values.coordination} err={err.coordination} />
+          <SelectField
+            name="height"
+            label="Зріст"
+            required
+            options={HEIGHT_OPTIONS}
+            def={str(values.height) || HEIGHT_DEFAULT}
+            err={err.height}
+            allowEmpty={false}
+          />
+          <SelectField name="build" label="Статура" required options={BUILD_OPTIONS} def={values.build} err={err.build} />
         </div>
         <Checkbox name="doesSports" label="Займається спортом" defaultChecked={bool(values.doesSports)} />
       </Section>
 
       <Section title="Розумова">
         <div className="grid gap-4 sm:grid-cols-2">
-          <ScaleField name="intellect" label="Інтелект" def={values.intellect} err={err.intellect} />
-          <ScaleField name="logic" label="Логіка" def={values.logic} err={err.logic} />
           <ScaleField name="creativity" label="Творчість" def={values.creativity} err={err.creativity} />
           <ScaleField name="communication" label="Комунікація" def={values.communication} err={err.communication} />
         </div>
@@ -114,14 +117,7 @@ export function MemberForm({
           <Area name="physicalRestrictions" label="Фізичні обмеження" def={values.physicalRestrictions} err={err.physicalRestrictions} />
           <Area name="medicalNotes" label="Нотатки" def={values.medicalNotes} err={err.medicalNotes} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField name="personalityType" label="Тип особистості" options={PERSONALITY_OPTIONS} def={values.personalityType} err={err.personalityType} />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Checkbox name="firstTimeAtCamp" label="Перший раз у таборі" defaultChecked={bool(values.firstTimeAtCamp)} />
-          <Checkbox name="isExceptional" label="Винятковий" defaultChecked={bool(values.isExceptional)} />
-          <Checkbox name="panicAttacks" label="Панічні атаки" defaultChecked={bool(values.panicAttacks)} />
-        </div>
+        <Checkbox name="isExceptional" label="Особливий" defaultChecked={bool(values.isExceptional)} />
       </Section>
 
       <Section title="Загін">
@@ -197,19 +193,23 @@ function SelectField({
   options,
   def,
   err,
+  required,
   emptyLabel = "—",
+  allowEmpty = true,
 }: {
   name: string;
   label: string;
   options: Option[];
   def?: unknown;
   err?: string;
+  required?: boolean;
   emptyLabel?: string;
+  allowEmpty?: boolean;
 }) {
   return (
-    <Field label={label} htmlFor={name} error={err}>
+    <Field label={label} htmlFor={name} required={required} error={err}>
       <Select id={name} name={name} defaultValue={str(def)} aria-invalid={!!err}>
-        <option value="">{emptyLabel}</option>
+        {allowEmpty && <option value="">{emptyLabel}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
