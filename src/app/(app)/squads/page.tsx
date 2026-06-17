@@ -21,7 +21,7 @@ export default async function SquadsPage() {
     }),
     canChangeLeader
       ? prisma.user.findMany({
-          where: { role: { in: ["LEADER", "DIRECTOR"] } },
+          where: { role: "LEADER" },
           orderBy: { name: "asc" },
           select: { id: true, name: true },
         })
@@ -41,7 +41,7 @@ export default async function SquadsPage() {
       <PageHeader
         title="Загони"
         description={`${squads.length} у таборі «${camp.name}»`}
-        action={canManageAny ? <CreateSquadDialog leaders={leaders} canChangeLeader={canChangeLeader} /> : undefined}
+        action={canManageAny ? <CreateSquadDialog leaders={leaders} canChangeLeader={canChangeLeader} squadCount={squads.length} /> : undefined}
       />
 
       {squads.length === 0 ? (

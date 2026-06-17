@@ -67,7 +67,8 @@ export type CampInput = z.infer<typeof campSchema>;
 // --- Squad -----------------------------------------------------------------
 
 export const squadSchema = z.object({
-  name: requiredText("Введіть назву загону"),
+  // Optional — a blank name falls back to "Загін N" (filled in the action).
+  name: optionalText,
   color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Колір у форматі #RRGGBB"),
   leaderUserId: optionalText,
   leaderName: optionalText,

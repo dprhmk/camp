@@ -8,6 +8,17 @@ import { requireActiveCamp } from "@/lib/camp";
 import { fieldErrors, squadSchema } from "@/lib/validation";
 import type { ActionState } from "./types";
 
+/** A blank squad name falls back to "Загін N" by its position in the camp. */
+async function defaultSquadName(campId: string, squadId?: string): Promise<string> {
+  const squads = await prisma.squad.findMany({
+    where: { campId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  const idx = squadId ? squads.findIndex((s) => s.id === squadId) : -1;
+  return `Загін ${(idx === -1 ? squads.length : idx) + 1}`;
+}
+
 export async function createSquadAction(
   _prev: ActionState,
   formData: FormData,
@@ -31,7 +42,7 @@ export async function createSquadAction(
   await prisma.squad.create({
     data: {
       campId: camp.id,
-      name: parsed.data.name,
+      name: parsed.data.name ?? (await defaultSquadName(camp.id)),
       color: parsed.data.color,
       leaderUserId: parsed.data.leaderUserId ?? null,
       leaderName: parsed.data.leaderName ?? null,
@@ -72,7 +83,7 @@ export async function updateSquadAction(
   await prisma.squad.update({
     where: { id: squadId },
     data: {
-      name: parsed.data.name,
+      name: parsed.data.name ?? (await defaultSquadName(camp.id, squadId)),
       color: parsed.data.color,
       leaderName: parsed.data.leaderName ?? null,
       assistantName: parsed.data.assistantName ?? null,

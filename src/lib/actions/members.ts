@@ -76,21 +76,16 @@ async function uniqueCode(campId: string): Promise<string> {
   return generateCode(8);
 }
 
-/** A squad may have at most one leader child. */
-async function squadHasOtherLeader(campId: string, squadId: string, excludeMemberId?: string) {
-  const other = await prisma.member.findFirst({
-    where: {
-      campId,
-      squadId,
-      isLeader: true,
-      ...(excludeMemberId ? { id: { not: excludeMemberId } } : {}),
-    },
-    select: { id: true },
+/**
+ * A squad may have at most one leader child. When `memberId` becomes the leader
+ * of `squadId`, demote any previous leader(s) of that squad.
+ */
+async function demoteOtherLeaders(campId: string, squadId: string, memberId: string) {
+  await prisma.member.updateMany({
+    where: { campId, squadId, isLeader: true, id: { not: memberId } },
+    data: { isLeader: false },
   });
-  return Boolean(other);
 }
-
-const ONE_LEADER_MSG = "У цьому загоні вже є лідер загону — спершу зніміть лідерство з нього.";
 
 export async function createMemberAction(
   _prev: ActionState,
@@ -111,18 +106,15 @@ export async function createMemberAction(
     };
   }
 
-  if (
-    parsed.data.isLeader &&
-    parsed.data.squadId &&
-    (await squadHasOtherLeader(camp.id, parsed.data.squadId))
-  ) {
-    return { ok: false, message: ONE_LEADER_MSG };
-  }
-
   const code = await uniqueCode(camp.id);
   const member = await prisma.member.create({
     data: { ...toData(parsed.data), campId: camp.id, code },
   });
+
+  // One leader per squad: making this member leader demotes the previous one.
+  if (member.isLeader && member.squadId) {
+    await demoteOtherLeaders(camp.id, member.squadId, member.id);
+  }
 
   await recomputeSquadTotalsMany([member.squadId]);
   revalidatePath("/members");
@@ -158,19 +150,16 @@ export async function updateMemberAction(
     }
   }
 
-  if (
-    parsed.data.isLeader &&
-    parsed.data.squadId &&
-    (await squadHasOtherLeader(camp.id, parsed.data.squadId, memberId))
-  ) {
-    return { ok: false, message: ONE_LEADER_MSG };
-  }
-
   const previousSquadId = member.squadId;
   const updated = await prisma.member.update({
     where: { id: memberId },
     data: toData(parsed.data),
   });
+
+  // One leader per squad: making this member leader demotes the previous one.
+  if (updated.isLeader && updated.squadId) {
+    await demoteOtherLeaders(camp.id, updated.squadId, updated.id);
+  }
 
   await recomputeSquadTotalsMany([previousSquadId, updated.squadId]);
   revalidatePath("/members");

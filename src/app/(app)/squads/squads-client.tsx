@@ -127,21 +127,25 @@ function SquadFormFields({
   squad,
   leaders,
   canChangeLeader,
+  defaultName = "",
+  defaultColor = SQUAD_COLORS[0],
 }: {
   state: ActionState;
   squad?: Squad;
   leaders: Leader[];
   canChangeLeader: boolean;
+  defaultName?: string;
+  defaultColor?: string;
 }) {
   const err = state.fieldErrors ?? {};
   return (
     <>
       {state.message && <Alert variant="error">{state.message}</Alert>}
-      <Field label="Назва" htmlFor="name" required error={err.name}>
-        <Input id="name" name="name" defaultValue={squad?.name} placeholder="Загін 1" aria-invalid={!!err.name} />
+      <Field label="Назва" htmlFor="name" hint="Можна лишити порожнім — буде «Загін N»" error={err.name}>
+        <Input id="name" name="name" defaultValue={squad?.name ?? defaultName} placeholder="Загін 1" aria-invalid={!!err.name} />
       </Field>
       <Field label="Колір" error={err.color}>
-        <ColorPicker name="color" defaultColor={squad?.color ?? SQUAD_COLORS[0]} />
+        <ColorPicker name="color" defaultColor={squad?.color ?? defaultColor} />
       </Field>
       <Field label="ПІБ вожатого" htmlFor="leaderName" error={err.leaderName}>
         <Input id="leaderName" name="leaderName" defaultValue={squad?.leaderName ?? ""} />
@@ -202,7 +206,15 @@ function DialogShell({
   );
 }
 
-export function CreateSquadDialog({ leaders, canChangeLeader }: { leaders: Leader[]; canChangeLeader: boolean }) {
+export function CreateSquadDialog({
+  leaders,
+  canChangeLeader,
+  squadCount,
+}: {
+  leaders: Leader[];
+  canChangeLeader: boolean;
+  squadCount: number;
+}) {
   const { open, setOpen, state, formAction, pending } = useDialogAction(createSquadAction);
 
   return (
@@ -218,7 +230,13 @@ export function CreateSquadDialog({ leaders, canChangeLeader }: { leaders: Leade
       }
     >
       <form action={formAction} className="space-y-4" noValidate>
-        <SquadFormFields state={state} leaders={leaders} canChangeLeader={canChangeLeader} />
+        <SquadFormFields
+          state={state}
+          leaders={leaders}
+          canChangeLeader={canChangeLeader}
+          defaultName={`Загін ${squadCount + 1}`}
+          defaultColor={SQUAD_COLORS[squadCount % SQUAD_COLORS.length]}
+        />
         <Button type="submit" loading={pending} className="w-full">
           Створити
         </Button>

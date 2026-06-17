@@ -94,6 +94,8 @@ export async function generateTeamsAction(
   await prisma.$transaction(async (tx) => {
     // Replace existing squads (members are detached by onDelete: SetNull).
     await tx.squad.deleteMany({ where: { campId: camp.id } });
+    // Redistribution clears all previous squad leaders.
+    await tx.member.updateMany({ where: { campId: camp.id }, data: { isLeader: false } });
 
     for (const squad of result.squads) {
       const leaderUserId = leaderUserIds[squad.index] || null;

@@ -55,7 +55,9 @@ export function MemberForm({
   const [isLeader, setIsLeader] = React.useState(bool(values.isLeader));
 
   const existingLeader = squadId ? squadLeaders[squadId] : undefined;
-  const leaderLocked = !!existingLeader && existingLeader.memberId !== currentMemberId;
+  // Another member already leads this squad — assigning this one will replace them.
+  const willReplaceLeader =
+    isLeader && !!existingLeader && existingLeader.memberId !== currentMemberId;
 
   React.useEffect(() => {
     if (state.ok) toast({ type: "success", message: "Збережено" });
@@ -183,13 +185,13 @@ export function MemberForm({
           <Checkbox
             name="isLeader"
             label="Лідер загону"
-            checked={!leaderLocked && isLeader}
+            checked={isLeader}
             onChange={(e) => setIsLeader(e.target.checked)}
-            disabled={leaderLocked}
           />
-          {leaderLocked && (
+          {willReplaceLeader && (
             <p className="px-1 text-xs text-amber-600">
-              У цьому загоні вже є лідер: {existingLeader?.name}. Спершу зніміть лідерство з нього.
+              Зараз лідер цього загону — {existingLeader?.name}. Якщо збережете, лідером стане цей
+              учасник, а {existingLeader?.name} більше ним не буде.
             </p>
           )}
         </div>

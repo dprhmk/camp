@@ -14,7 +14,7 @@ export default async function GeneratePage() {
     prisma.member.count({ where: { campId: camp.id } }),
     prisma.member.count({ where: { campId: camp.id, isProfileComplete: false } }),
     prisma.user.findMany({
-      where: { role: { in: ["LEADER", "DIRECTOR"] } },
+      where: { role: "LEADER" },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
