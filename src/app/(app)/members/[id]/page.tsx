@@ -78,6 +78,10 @@ export default async function MemberPage({
 
       {editable ? (
         <MemberForm
+          // Remount with fresh server values after each successful save so the
+          // uncontrolled fields don't keep React 19's post-action reset to the
+          // stale mount-time defaults. updatedAt changes only on a real save.
+          key={member.updatedAt.toISOString()}
           action={updateMemberAction.bind(null, member.id)}
           values={{ ...member, dateOfBirth: member.dateOfBirth?.toISOString() ?? "" }}
           squads={squads}
