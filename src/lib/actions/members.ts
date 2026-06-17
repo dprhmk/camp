@@ -132,7 +132,7 @@ export async function updateMemberAction(
 
   const member = await prisma.member.findFirst({
     where: { id: memberId, campId: camp.id },
-    include: { squad: { select: { leaderUserId: true } } },
+    include: { squad: { select: { leaderUserId: true, assistant1UserId: true, assistant2UserId: true } } },
   });
   if (!member) return { ok: false, message: "Учасника не знайдено" };
   if (!canManageMember(user, member)) {
@@ -173,7 +173,7 @@ export async function deleteMemberAction(memberId: string) {
   const camp = await requireActiveCamp();
   const member = await prisma.member.findFirst({
     where: { id: memberId, campId: camp.id },
-    include: { squad: { select: { leaderUserId: true } } },
+    include: { squad: { select: { leaderUserId: true, assistant1UserId: true, assistant2UserId: true } } },
   });
   if (!member) return;
   if (!canManageMember(user, member)) return;

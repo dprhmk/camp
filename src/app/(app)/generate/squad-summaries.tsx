@@ -13,8 +13,6 @@ export type SquadSummary = {
   ageBands: Record<string, number>;
   avgPhysical: number;
   avgMental: number;
-  avgCreativity: number;
-  avgCommunication: number;
 };
 
 const r1 = (v: number) => Math.round(v * 10) / 10;
@@ -39,11 +37,6 @@ export function SquadSummaries({ squads }: { squads: SquadSummary[] }) {
 
               <Bar label="Фізична" value={s.avgPhysical} color="#0ea5e9" />
               <Bar label="Розумова" value={s.avgMental} color="#a855f7" />
-
-              <div className="flex justify-between text-xs text-slate-600">
-                <span>Творчість: <b>{r1(s.avgCreativity)}</b></span>
-                <span>Комунікація: <b>{r1(s.avgCommunication)}</b></span>
-              </div>
 
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                 <span>♂ Хлопці: <b>{s.male}</b></span>

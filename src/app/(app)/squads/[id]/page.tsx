@@ -18,7 +18,14 @@ export default async function SquadPage({ params }: { params: Promise<{ id: stri
   await requireUser();
   const camp = await requireActiveCamp();
 
-  const squad = await prisma.squad.findFirst({ where: { id, campId: camp.id } });
+  const squad = await prisma.squad.findFirst({
+    where: { id, campId: camp.id },
+    include: {
+      leaderUser: { select: { name: true } },
+      assistant1User: { select: { name: true } },
+      assistant2User: { select: { name: true } },
+    },
+  });
   if (!squad) notFound();
 
   const members = await prisma.member.findMany({
@@ -53,7 +60,11 @@ export default async function SquadPage({ params }: { params: Promise<{ id: stri
       <PageHeader
         title={squad.name}
         back="/squads"
-        description={[squad.leaderName && `Вожатий: ${squad.leaderName}`, squad.assistantName && `Помічник: ${squad.assistantName}`]
+        description={[
+          squad.leaderUser && `Вожатий: ${squad.leaderUser.name}`,
+          [squad.assistant1User?.name, squad.assistant2User?.name].filter(Boolean).join(", ") &&
+            `Помічники: ${[squad.assistant1User?.name, squad.assistant2User?.name].filter(Boolean).join(", ")}`,
+        ]
           .filter(Boolean)
           .join(" · ")}
       />

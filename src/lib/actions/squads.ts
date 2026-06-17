@@ -34,19 +34,23 @@ export async function createSquadAction(
     name: formData.get("name"),
     color: formData.get("color"),
     leaderUserId: formData.get("leaderUserId"),
-    leaderName: formData.get("leaderName"),
-    assistantName: formData.get("assistantName"),
+    assistant1UserId: formData.get("assistant1UserId"),
+    assistant2UserId: formData.get("assistant2UserId"),
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+
+  if (!parsed.data.leaderUserId) {
+    return { ok: false, fieldErrors: { leaderUserId: "Оберіть вожатого загону" } };
+  }
 
   await prisma.squad.create({
     data: {
       campId: camp.id,
       name: parsed.data.name ?? (await defaultSquadName(camp.id)),
       color: parsed.data.color,
-      leaderUserId: parsed.data.leaderUserId ?? null,
-      leaderName: parsed.data.leaderName ?? null,
-      assistantName: parsed.data.assistantName ?? null,
+      leaderUserId: parsed.data.leaderUserId,
+      assistant1UserId: parsed.data.assistant1UserId ?? null,
+      assistant2UserId: parsed.data.assistant2UserId ?? null,
     },
   });
 
@@ -72,22 +76,29 @@ export async function updateSquadAction(
     name: formData.get("name"),
     color: formData.get("color"),
     leaderUserId: formData.get("leaderUserId"),
-    leaderName: formData.get("leaderName"),
-    assistantName: formData.get("assistantName"),
+    assistant1UserId: formData.get("assistant1UserId"),
+    assistant2UserId: formData.get("assistant2UserId"),
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
-  // Only director/admin may change which account leads the squad.
+  // Only director/admin may (re)assign the squad's leader and assistants.
   const canChangeLeader = can(user, "squad:changeLeader");
+  if (canChangeLeader && !parsed.data.leaderUserId) {
+    return { ok: false, fieldErrors: { leaderUserId: "Оберіть вожатого загону" } };
+  }
 
   await prisma.squad.update({
     where: { id: squadId },
     data: {
       name: parsed.data.name ?? (await defaultSquadName(camp.id, squadId)),
       color: parsed.data.color,
-      leaderName: parsed.data.leaderName ?? null,
-      assistantName: parsed.data.assistantName ?? null,
-      ...(canChangeLeader ? { leaderUserId: parsed.data.leaderUserId ?? null } : {}),
+      ...(canChangeLeader
+        ? {
+            leaderUserId: parsed.data.leaderUserId ?? null,
+            assistant1UserId: parsed.data.assistant1UserId ?? null,
+            assistant2UserId: parsed.data.assistant2UserId ?? null,
+          }
+        : {}),
     },
   });
 

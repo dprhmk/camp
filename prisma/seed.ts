@@ -46,20 +46,34 @@ async function main() {
   await prisma.user.create({
     data: { name: "Директор Табору", email: "director@camp.local", role: "DIRECTOR", passwordHash: await hash("director123") },
   });
-  // Four squad leaders, each with a personal account.
-  const leaderNames = ["Вожатий Перший", "Вожатий Другий", "Вожатий Третій", "Вожатий Четвертий"];
-  const leaders: { id: string; name: string }[] = [];
-  for (let i = 0; i < 4; i++) {
+  // Four squad leaders (вожатий 1..4) + two assistants each (помічник N.1 / N.2).
+  const leaders: { id: string }[] = [];
+  const assistants: { id: string }[][] = [];
+  for (let i = 1; i <= 4; i++) {
     leaders.push(
       await prisma.user.create({
         data: {
-          name: leaderNames[i],
-          email: `leader${i + 1}@camp.local`,
+          name: `Вожатий ${i}`,
+          email: `leader${i}@camp.local`,
           role: "LEADER",
           passwordHash: await hash("leader12345"),
         },
       }),
     );
+    const pair: { id: string }[] = [];
+    for (let j = 1; j <= 2; j++) {
+      pair.push(
+        await prisma.user.create({
+          data: {
+            name: `Помічник ${i}.${j}`,
+            email: `assistant${i}-${j}@camp.local`,
+            role: "ASSISTANT",
+            passwordHash: await hash("assistant12345"),
+          },
+        }),
+      );
+    }
+    assistants.push(pair);
   }
 
   const camp = await prisma.camp.create({
@@ -72,25 +86,19 @@ async function main() {
     },
   });
 
-  // Four squads, each with a leader account and a named assistant.
-  const squadDefs = [
-    { name: "Орли", leaderName: "Вожатий Перший", assistant: "Помічник Перший" },
-    { name: "Леви", leaderName: "Вожатий Другий", assistant: "Помічник Другий" },
-    { name: "Соколи", leaderName: "Вожатий Третій", assistant: "Помічник Третій" },
-    { name: "Вовки", leaderName: "Вожатий Четвертий", assistant: "Помічник Четвертий" },
-  ].map((d, i) => ({ ...d, leaderUser: leaders[i].id }));
+  // Four squads, each with a leader account + two assistant accounts.
+  const squadNames = ["Орли", "Леви", "Соколи", "Вовки"];
   const squads = [];
-  for (let i = 0; i < squadDefs.length; i++) {
-    const d = squadDefs[i];
+  for (let i = 0; i < squadNames.length; i++) {
     squads.push(
       await prisma.squad.create({
         data: {
           campId: camp.id,
-          name: d.name,
+          name: squadNames[i],
           color: SQUAD_COLORS[i],
-          leaderUserId: d.leaderUser,
-          leaderName: d.leaderName,
-          assistantName: d.assistant,
+          leaderUserId: leaders[i].id,
+          assistant1UserId: assistants[i][0].id,
+          assistant2UserId: assistants[i][1].id,
         },
       }),
     );

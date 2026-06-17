@@ -13,20 +13,23 @@ export default async function SquadsPage() {
   const canManageAny = can(user, "squad:manageAny");
   const canChangeLeader = can(user, "squad:changeLeader");
 
-  const [squads, leaders, traitAverages] = await Promise.all([
+  const [squads, leaders, assistants, avgs] = await Promise.all([
     prisma.squad.findMany({
       where: { campId: camp.id },
       orderBy: { name: "asc" },
-      include: { _count: { select: { members: true } } },
+      include: {
+        _count: { select: { members: true } },
+        leaderUser: { select: { name: true } },
+        assistant1User: { select: { name: true } },
+        assistant2User: { select: { name: true } },
+      },
     }),
     canChangeLeader
-      ? prisma.user.findMany({
-          where: { role: "LEADER" },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true },
-        })
+      ? prisma.user.findMany({ where: { role: "LEADER" }, orderBy: { name: "asc" }, select: { id: true, name: true } })
       : Promise.resolve([]),
-    // Per-squad average of both scales, for the team gauges.
+    canChangeLeader
+      ? prisma.user.findMany({ where: { role: "ASSISTANT" }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+      : Promise.resolve([]),
     prisma.member.groupBy({
       by: ["squadId"],
       where: { campId: camp.id, squadId: { not: null } },
@@ -34,14 +37,23 @@ export default async function SquadsPage() {
     }),
   ]);
 
-  const avgBySquad = new Map(traitAverages.map((a) => [a.squadId, a._avg]));
+  const avgBySquad = new Map(avgs.map((a) => [a.squadId, a._avg]));
 
   return (
     <Container>
       <PageHeader
         title="Загони"
         description={`${squads.length} у таборі «${camp.name}»`}
-        action={canManageAny ? <CreateSquadDialog leaders={leaders} canChangeLeader={canChangeLeader} squadCount={squads.length} /> : undefined}
+        action={
+          canManageAny ? (
+            <CreateSquadDialog
+              leaders={leaders}
+              assistants={assistants}
+              canChangeLeader={canChangeLeader}
+              squadCount={squads.length}
+            />
+          ) : undefined
+        }
       />
 
       {squads.length === 0 ? (
@@ -63,8 +75,11 @@ export default async function SquadsPage() {
               name: s.name,
               color: s.color,
               leaderUserId: s.leaderUserId,
-              leaderName: s.leaderName,
-              assistantName: s.assistantName,
+              assistant1UserId: s.assistant1UserId,
+              assistant2UserId: s.assistant2UserId,
+              leaderName: s.leaderUser?.name ?? null,
+              assistant1Name: s.assistant1User?.name ?? null,
+              assistant2Name: s.assistant2User?.name ?? null,
               members: s._count.members,
               canManage: canManageSquad(user, s),
               physicalScore: avg?.physicalScore ?? 0,
@@ -72,6 +87,7 @@ export default async function SquadsPage() {
             };
           })}
           leaders={leaders}
+          assistants={assistants}
           canChangeLeader={canChangeLeader}
           canDelete={canManageAny}
         />

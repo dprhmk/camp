@@ -9,7 +9,7 @@ import { type ActionState } from "@/lib/actions/types";
 import { useDialogAction } from "@/lib/use-dialog-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -22,74 +22,87 @@ type Squad = {
   name: string;
   color: string;
   leaderUserId: string | null;
+  assistant1UserId: string | null;
+  assistant2UserId: string | null;
   leaderName: string | null;
-  assistantName: string | null;
+  assistant1Name: string | null;
+  assistant2Name: string | null;
   members: number;
   canManage: boolean;
   physicalScore: number; // average per member
   mentalScore: number;
 };
-type Leader = { id: string; name: string };
+type Account = { id: string; name: string };
 
 export function SquadsView({
   squads,
   leaders,
+  assistants,
   canChangeLeader,
   canDelete,
 }: {
   squads: Squad[];
-  leaders: Leader[];
+  leaders: Account[];
+  assistants: Account[];
   canChangeLeader: boolean;
   canDelete: boolean;
 }) {
   return (
     <div className="space-y-3">
-      {squads.map((s) => (
-        <Card key={s.id}>
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="mt-1 size-5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-              <Link href={`/squads/${s.id}`} className="min-w-0 flex-1 group">
-                <h3 className="flex items-center gap-1 truncate text-base font-semibold text-slate-900 group-hover:text-brand-700">
-                  {s.name}
-                  <ChevronRight className="size-4 text-slate-300" />
-                </h3>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="size-3.5" /> {s.members}
-                  </span>
-                  {s.leaderName && (
+      {squads.map((s) => {
+        const assistantNames = [s.assistant1Name, s.assistant2Name].filter(Boolean);
+        return (
+          <Card key={s.id}>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="mt-1 size-5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
+                <Link href={`/squads/${s.id}`} className="min-w-0 flex-1 group">
+                  <h3 className="flex items-center gap-1 truncate text-base font-semibold text-slate-900 group-hover:text-brand-700">
+                    {s.name}
+                    <ChevronRight className="size-4 text-slate-300" />
+                  </h3>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1">
-                      <Crown className="size-3.5 text-amber-500" /> {s.leaderName}
+                      <Users className="size-3.5" /> {s.members}
                     </span>
-                  )}
-                  {s.assistantName && <span>Помічник: {s.assistantName}</span>}
-                </div>
-              </Link>
-              {s.canManage && (
-                <div className="flex shrink-0 gap-1">
-                  <EditSquadDialog squad={s} leaders={leaders} canChangeLeader={canChangeLeader} />
-                  {canDelete && (
-                    <ConfirmDialog
-                      title="Видалити загін?"
-                      description={`Загін «${s.name}» буде видалено. Його учасники залишаться в таборі без загону.`}
-                      confirmLabel="Видалити"
-                      onConfirm={() => deleteSquadAction(s.id)}
-                      trigger={
-                        <Button size="icon" variant="ghost" className="size-9 text-red-600">
-                          <Trash2 className="size-4" />
-                        </Button>
-                      }
+                    {s.leaderName && (
+                      <span className="inline-flex items-center gap-1">
+                        <Crown className="size-3.5 text-amber-500" /> {s.leaderName}
+                      </span>
+                    )}
+                    {assistantNames.length > 0 && <span>Помічники: {assistantNames.join(", ")}</span>}
+                  </div>
+                </Link>
+                {s.canManage && (
+                  <div className="flex shrink-0 gap-1">
+                    <EditSquadDialog
+                      squad={s}
+                      leaders={leaders}
+                      assistants={assistants}
+                      canChangeLeader={canChangeLeader}
                     />
-                  )}
-                </div>
-              )}
-            </div>
+                    {canDelete && (
+                      <ConfirmDialog
+                        title="Видалити загін?"
+                        description={`Загін «${s.name}» буде видалено. Його учасники залишаться в таборі без загону.`}
+                        confirmLabel="Видалити"
+                        onConfirm={() => deleteSquadAction(s.id)}
+                        trigger={
+                          <Button size="icon" variant="ghost" className="size-9 text-red-600">
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
 
-            <StatsScales physicalScore={s.physicalScore} mentalScore={s.mentalScore} />
-          </CardContent>
-        </Card>
-      ))}
+              <StatsScales physicalScore={s.physicalScore} mentalScore={s.mentalScore} />
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -126,13 +139,15 @@ function SquadFormFields({
   state,
   squad,
   leaders,
+  assistants,
   canChangeLeader,
   defaultName = "",
   defaultColor = SQUAD_COLORS[0],
 }: {
   state: ActionState;
   squad?: Squad;
-  leaders: Leader[];
+  leaders: Account[];
+  assistants: Account[];
   canChangeLeader: boolean;
   defaultName?: string;
   defaultColor?: string;
@@ -147,28 +162,33 @@ function SquadFormFields({
       <Field label="Колір" error={err.color}>
         <ColorPicker name="color" defaultColor={squad?.color ?? defaultColor} />
       </Field>
-      <Field label="ПІБ вожатого" htmlFor="leaderName" error={err.leaderName}>
-        <Input id="leaderName" name="leaderName" defaultValue={squad?.leaderName ?? ""} />
-      </Field>
-      <Field label="ПІБ помічника" htmlFor="assistantName" error={err.assistantName}>
-        <Input id="assistantName" name="assistantName" defaultValue={squad?.assistantName ?? ""} />
-      </Field>
       {canChangeLeader && (
-        <Field label="Акаунт вожатого" htmlFor="leaderUserId" hint="Привʼязка до особистого акаунта">
-          <select
-            id="leaderUserId"
-            name="leaderUserId"
-            defaultValue={squad?.leaderUserId ?? ""}
-            className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-base shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-          >
-            <option value="">— не привʼязано —</option>
-            {leaders.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <>
+          <Field label="Вожатий" htmlFor="leaderUserId" required error={err.leaderUserId}>
+            <Select id="leaderUserId" name="leaderUserId" defaultValue={squad?.leaderUserId ?? ""} aria-invalid={!!err.leaderUserId}>
+              <option value="">— оберіть вожатого —</option>
+              {leaders.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Помічник 1" htmlFor="assistant1UserId" error={err.assistant1UserId}>
+            <Select id="assistant1UserId" name="assistant1UserId" defaultValue={squad?.assistant1UserId ?? ""}>
+              <option value="">— немає —</option>
+              {assistants.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Помічник 2" htmlFor="assistant2UserId" error={err.assistant2UserId}>
+            <Select id="assistant2UserId" name="assistant2UserId" defaultValue={squad?.assistant2UserId ?? ""}>
+              <option value="">— немає —</option>
+              {assistants.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </Select>
+          </Field>
+        </>
       )}
     </>
   );
@@ -208,10 +228,12 @@ function DialogShell({
 
 export function CreateSquadDialog({
   leaders,
+  assistants,
   canChangeLeader,
   squadCount,
 }: {
-  leaders: Leader[];
+  leaders: Account[];
+  assistants: Account[];
   canChangeLeader: boolean;
   squadCount: number;
 }) {
@@ -233,6 +255,7 @@ export function CreateSquadDialog({
         <SquadFormFields
           state={state}
           leaders={leaders}
+          assistants={assistants}
           canChangeLeader={canChangeLeader}
           defaultName={`Загін ${squadCount + 1}`}
           defaultColor={SQUAD_COLORS[squadCount % SQUAD_COLORS.length]}
@@ -248,10 +271,12 @@ export function CreateSquadDialog({
 function EditSquadDialog({
   squad,
   leaders,
+  assistants,
   canChangeLeader,
 }: {
   squad: Squad;
-  leaders: Leader[];
+  leaders: Account[];
+  assistants: Account[];
   canChangeLeader: boolean;
 }) {
   const action = React.useMemo(() => updateSquadAction.bind(null, squad.id), [squad.id]);
@@ -269,7 +294,13 @@ function EditSquadDialog({
       }
     >
       <form action={formAction} className="space-y-4" noValidate>
-        <SquadFormFields state={state} squad={squad} leaders={leaders} canChangeLeader={canChangeLeader} />
+        <SquadFormFields
+          state={state}
+          squad={squad}
+          leaders={leaders}
+          assistants={assistants}
+          canChangeLeader={canChangeLeader}
+        />
         <Button type="submit" loading={pending} className="w-full">
           Зберегти
         </Button>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Crown } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { can, canManageMember } from "@/lib/rbac";
+import { can, canManageMember, ownSquadFilter } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { updateMemberAction } from "@/lib/actions/members";
 import { getSquadLeaders } from "@/lib/leaders";
@@ -26,7 +26,18 @@ export default async function MemberPage({
 
   const member = await prisma.member.findUnique({
     where: { id },
-    include: { squad: { select: { id: true, name: true, color: true, leaderUserId: true } } },
+    include: {
+      squad: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+          leaderUserId: true,
+          assistant1UserId: true,
+          assistant2UserId: true,
+        },
+      },
+    },
   });
   if (!member || member.campId !== camp.id) notFound();
 
@@ -35,7 +46,7 @@ export default async function MemberPage({
 
   const [squads, squadLeaders] = await Promise.all([
     prisma.squad.findMany({
-      where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
+      where: { campId: camp.id, ...(createAny ? {} : ownSquadFilter(user.id)) },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

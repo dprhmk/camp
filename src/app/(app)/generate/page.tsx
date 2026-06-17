@@ -10,14 +10,9 @@ import { SquadSummaries, type SquadSummary } from "./squad-summaries";
 export default async function GeneratePage() {
   await requirePermission("generate:run");
   const camp = await requireActiveCamp();
-  const [memberCount, notReadyCount, leaders, squads, members] = await Promise.all([
+  const [memberCount, notReadyCount, squads, members] = await Promise.all([
     prisma.member.count({ where: { campId: camp.id } }),
     prisma.member.count({ where: { campId: camp.id, isProfileComplete: false } }),
-    prisma.user.findMany({
-      where: { role: "LEADER" },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
     prisma.squad.findMany({
       where: { campId: camp.id },
       orderBy: { name: "asc" },
@@ -32,8 +27,6 @@ export default async function GeneratePage() {
         dateOfBirth: true,
         physicalScore: true,
         mentalScore: true,
-        creativity: true,
-        communication: true,
       },
     }),
   ]);
@@ -61,8 +54,6 @@ export default async function GeneratePage() {
       ageBands,
       avgPhysical: sum((m) => m.physicalScore) / n,
       avgMental: sum((m) => m.mentalScore) / n,
-      avgCreativity: sum((m) => m.creativity ?? 0) / n,
-      avgCommunication: sum((m) => m.communication ?? 0) / n,
     };
   });
 
@@ -79,7 +70,7 @@ export default async function GeneratePage() {
         </Alert>
       ) : (
         <>
-          <GenerateForm memberCount={memberCount} notReadyCount={notReadyCount} leaders={leaders} />
+          <GenerateForm memberCount={memberCount} notReadyCount={notReadyCount} />
           <SquadSummaries squads={summaries} />
         </>
       )}

@@ -26,13 +26,15 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
-  // Role: "SUPER_ADMIN" | "DIRECTOR" | "LEADER"
+  // Role: "SUPER_ADMIN" | "DIRECTOR" | "LEADER" | "ASSISTANT"
   role         String   @default("LEADER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Squads this user leads (a leader is bound to a squad per season).
-  ledSquads Squad[] @relation("SquadLeader")
+  // Squads this user is bound to (per season) as leader / assistant.
+  ledSquads        Squad[] @relation("SquadLeader")
+  assistant1Squads Squad[] @relation("SquadAssistant1")
+  assistant2Squads Squad[] @relation("SquadAssistant2")
 }
 
 // ---------------------------------------------------------------------------
@@ -64,19 +66,20 @@ model Squad {
   campId        String
   name          String
   color         String   @default("#3b82f6")
-  // Account of the leader (optional — a squad may exist before a leader logs in).
-  leaderUserId  String?
-  // Display names (denormalised for quick contact lists / printing).
-  leaderName    String?
-  assistantName String?
+  // Bound accounts: one leader (вожатий) + up to two assistants (помічники).
+  leaderUserId     String?
+  assistant1UserId String?
+  assistant2UserId String?
   // Cached aggregates, recomputed whenever a member is saved or moved.
   totalPhysical Float    @default(0)
   totalMental   Float    @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  camp       Camp     @relation(fields: [campId], references: [id], onDelete: Cascade)
-  leaderUser User?    @relation("SquadLeader", fields: [leaderUserId], references: [id], onDelete: SetNull)
+  camp           Camp  @relation(fields: [campId], references: [id], onDelete: Cascade)
+  leaderUser     User? @relation("SquadLeader", fields: [leaderUserId], references: [id], onDelete: SetNull)
+  assistant1User User? @relation("SquadAssistant1", fields: [assistant1UserId], references: [id], onDelete: SetNull)
+  assistant2User User? @relation("SquadAssistant2", fields: [assistant2UserId], references: [id], onDelete: SetNull)
   members    Member[]
 
   @@index([campId])

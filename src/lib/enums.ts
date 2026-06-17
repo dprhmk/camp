@@ -3,19 +3,21 @@
 
 export type Option<T extends string = string> = { value: T; label: string };
 
-export const ROLES = ["SUPER_ADMIN", "DIRECTOR", "LEADER"] as const;
+export const ROLES = ["SUPER_ADMIN", "DIRECTOR", "LEADER", "ASSISTANT"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_OPTIONS: Option<Role>[] = [
   { value: "SUPER_ADMIN", label: "Супер-адмін" },
   { value: "DIRECTOR", label: "Директор табору" },
   { value: "LEADER", label: "Вожатий" },
+  { value: "ASSISTANT", label: "Помічник" },
 ];
 
 export const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: "Супер-адмін",
   DIRECTOR: "Директор табору",
   LEADER: "Вожатий",
+  ASSISTANT: "Помічник",
 };
 
 export const GENDER_OPTIONS: Option[] = [

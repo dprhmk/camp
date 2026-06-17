@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { can } from "@/lib/rbac";
+import { can, ownSquadFilter } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { createMemberAction } from "@/lib/actions/members";
 import { getSquadLeaders } from "@/lib/leaders";
@@ -15,7 +15,7 @@ export default async function NewMemberPage() {
 
   const [squads, squadLeaders] = await Promise.all([
     prisma.squad.findMany({
-      where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
+      where: { campId: camp.id, ...(createAny ? {} : ownSquadFilter(user.id)) },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

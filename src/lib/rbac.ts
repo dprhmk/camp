@@ -40,7 +40,26 @@ const MATRIX: Record<Role, Action[]> = {
     "schedule:edit",
   ],
   LEADER: [],
+  ASSISTANT: [],
 };
+
+/** Squad fields that bind staff accounts (leader + two assistants). */
+export type SquadStaff = {
+  leaderUserId: string | null;
+  assistant1UserId: string | null;
+  assistant2UserId: string | null;
+};
+
+/** Prisma `where` fragment matching squads this user is bound to. */
+export function ownSquadFilter(userId: string) {
+  return {
+    OR: [
+      { leaderUserId: userId },
+      { assistant1UserId: userId },
+      { assistant2UserId: userId },
+    ],
+  };
+}
 
 /** Can this user perform a global/camp-wide action? */
 export function can(user: Pick<SessionUser, "role">, action: Action): boolean {
@@ -48,22 +67,26 @@ export function can(user: Pick<SessionUser, "role">, action: Action): boolean {
 }
 
 /**
- * Can this user manage a specific squad (edit its members, settings, leader)?
- * Super-admins and directors manage any squad; a leader manages only the squad
- * they lead.
+ * Can this user manage a specific squad (edit it + its members)?
+ * Super-admins and directors manage any squad; a leader or assistant manages
+ * only the squad they are bound to.
  */
 export function canManageSquad(
   user: Pick<SessionUser, "id" | "role">,
-  squad: { leaderUserId: string | null },
+  squad: SquadStaff,
 ): boolean {
   if (can(user, "squad:manageAny")) return true;
-  return user.role === "LEADER" && squad.leaderUserId === user.id;
+  return (
+    squad.leaderUserId === user.id ||
+    squad.assistant1UserId === user.id ||
+    squad.assistant2UserId === user.id
+  );
 }
 
 /** Can this user edit/delete a given member (based on the member's squad)? */
 export function canManageMember(
   user: Pick<SessionUser, "id" | "role">,
-  member: { squad: { leaderUserId: string | null } | null },
+  member: { squad: SquadStaff | null },
 ): boolean {
   if (can(user, "member:createAny")) return true;
   if (!member.squad) return false; // unassigned -> only director/admin

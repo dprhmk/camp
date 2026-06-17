@@ -70,9 +70,10 @@ export const squadSchema = z.object({
   // Optional — a blank name falls back to "Загін N" (filled in the action).
   name: optionalText,
   color: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Колір у форматі #RRGGBB"),
+  // Bound accounts (required leader enforced in the action when changeable).
   leaderUserId: optionalText,
-  leaderName: optionalText,
-  assistantName: optionalText,
+  assistant1UserId: optionalText,
+  assistant2UserId: optionalText,
 });
 export type SquadInput = z.infer<typeof squadSchema>;
 
@@ -99,8 +100,6 @@ export type ScheduleInput = z.infer<typeof scheduleSchema>;
 
 export const generateSchema = z.object({
   numSquads: z.coerce.number().int().min(2, "Мінімум 2 загони").max(6, "Максимум 6 загонів"),
-  // One selected leader account id per squad (in squad order); "" means none.
-  leaderUserIds: z.array(z.string().trim()).optional(),
 });
 
 // --- Member (the big profile) ---------------------------------------------
