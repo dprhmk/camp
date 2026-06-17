@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { requireActiveCamp } from "@/lib/camp";
 import { distributeMembers } from "@/lib/scoring";
+import { ageGroup } from "@/lib/member-utils";
 import { SQUAD_COLORS } from "@/lib/enums";
 import { generateSchema, fieldErrors } from "@/lib/validation";
 import type { ActionState } from "./types";
@@ -37,6 +38,9 @@ export async function generateTeamsAction(
       mentalScore: true,
       gender: true,
       residenceType: true,
+      height: true,
+      build: true,
+      dateOfBirth: true,
     },
   });
 
@@ -66,13 +70,21 @@ export async function generateTeamsAction(
     : [];
   const leaderById = new Map(leaderUsers.map((u) => [u.id, u.name]));
 
+  // Balance across every categorical axis at once: gender, residence, height,
+  // build and age band (date of birth) — plus the physical/mental scores.
+  const now = new Date();
   const result = distributeMembers(
     members.map((m) => ({
       id: m.id,
       physicalScore: m.physicalScore,
       mentalScore: m.mentalScore,
-      gender: m.gender,
-      residence: m.residenceType,
+      groups: [
+        m.gender && `g:${m.gender}`,
+        m.residenceType && `r:${m.residenceType}`,
+        m.height && `h:${m.height}`,
+        m.build && `b:${m.build}`,
+        ageGroup(m.dateOfBirth, now) && `age:${ageGroup(m.dateOfBirth, now)}`,
+      ].filter((g): g is string => Boolean(g)),
     })),
     numSquads,
   );

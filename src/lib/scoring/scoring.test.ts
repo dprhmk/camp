@@ -74,8 +74,10 @@ describe("distributeMembers", () => {
       id: `m${i}`,
       physicalScore: (i % 5) + 1,
       mentalScore: ((i + 2) % 5) + 1,
-      gender: i % 2 === 0 ? "MALE" : "FEMALE",
-      residence: i % 3 === 0 ? "HOME" : "BUILDING",
+      groups: [
+        i % 2 === 0 ? "g:MALE" : "g:FEMALE",
+        i % 3 === 0 ? "r:HOME" : "r:BUILDING",
+      ],
     }));
 
   it("assigns every member exactly once", () => {

@@ -3,23 +3,21 @@
 // Goal: split all members across N squads so each squad is as similar as
 // possible on every axis at once:
 //   • headcount (sizes differ by at most one);
-//   • gender (boys / girls spread evenly);
-//   • residence (живе в корпусі / вдома spread evenly);
-//   • physical and mental score totals.
-// Height, build, sport feed the physical score and "особливий" lowers the
-// mental score, so those get balanced through the scores.
+//   • physical and mental score totals;
+//   • every categorical "group" a member carries — gender, residence, height,
+//     build, age band, … (whatever the caller puts in `groups`).
 //
 // Strategy: greedy. Sort members heaviest-first by combined score, then place
 // each into the eligible (not-yet-full) squad that minimises the resulting
 // imbalance — the sum of how far apart the squads would be (max − min) on the
-// score totals (normalised) and on each gender/residence count.
+// score totals (normalised) and on the count of each group the member carries.
 
 export type DistributableMember = {
   id: string;
   physicalScore: number;
   mentalScore: number;
-  gender?: string | null; // "MALE" | "FEMALE"
-  residence?: string | null; // "BUILDING" | "HOME"
+  /** Categorical buckets to spread evenly, e.g. "g:MALE", "r:HOME", "age:12-13". */
+  groups?: string[];
 };
 
 export type SquadLoad = {
@@ -45,10 +43,7 @@ export type DistributeOptions = {
 
 const combined = (m: DistributableMember) => m.physicalScore + m.mentalScore;
 const round = (v: number) => Math.round(v * 100) / 100;
-const buckets = (m: DistributableMember) =>
-  [m.gender ? `g:${m.gender}` : null, m.residence ? `r:${m.residence}` : null].filter(
-    (b): b is string => b !== null,
-  );
+const buckets = (m: DistributableMember) => m.groups ?? [];
 
 export function distributeMembers(
   members: DistributableMember[],
