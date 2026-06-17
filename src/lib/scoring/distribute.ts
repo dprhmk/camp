@@ -39,6 +39,12 @@ export type DistributionResult = {
 export type DistributeOptions = {
   /** Score scale (used to normalise score spread against count spread). */
   scoreScale?: number;
+  /**
+   * Random source. When provided, ties (equal-score members, equally-good
+   * squads) are broken randomly, so each run differs while staying balanced.
+   * Omit for a fully deterministic result (tests, reproducibility).
+   */
+  rng?: () => number;
 };
 
 const combined = (m: DistributableMember) => m.physicalScore + m.mentalScore;
@@ -53,7 +59,8 @@ export function distributeMembers(
   if (numSquads < 1) throw new Error("numSquads must be >= 1");
   // Larger scale => score spread weighs less, so gender/residence balance (the
   // higher priority) dominates while scores still break otherwise-equal ties.
-  const scoreScale = options.scoreScale ?? 30;
+  const scoreScale = options.scoreScale ?? 12;
+  const rng = options.rng;
 
   const squads: SquadLoad[] = Array.from({ length: numSquads }, (_, index) => ({
     index,
@@ -90,26 +97,37 @@ export function distributeMembers(
     return c;
   };
 
-  // Heaviest first; deterministic id tie-break.
+  // Heaviest first; ties broken randomly (rng) or by id (deterministic).
+  const tie = new Map(members.map((m) => [m.id, rng ? rng() : 0]));
   const ordered = [...members].sort((a, b) => {
     const diff = combined(b) - combined(a);
-    return diff !== 0 ? diff : a.id.localeCompare(b.id);
+    if (diff !== 0) return diff;
+    return rng ? tie.get(a.id)! - tie.get(b.id)! : a.id.localeCompare(b.id);
   });
 
   const assignment: Record<string, number> = {};
+  const EPS = 1e-9;
 
   for (const m of ordered) {
-    let target: SquadLoad | null = null;
+    // Among eligible squads, find the lowest cost, then the smallest size, then
+    // pick randomly (rng) or the first (deterministic) from the remaining ties.
+    let candidates: SquadLoad[] = [];
     let best = Infinity;
     for (const s of squads) {
       if (s.size >= maxSize) continue;
       const c = cost(s, m);
-      if (target === null || c < best || (c === best && s.size < target.size)) {
-        target = s;
+      if (c < best - EPS) {
         best = c;
+        candidates = [s];
+      } else if (Math.abs(c - best) <= EPS) {
+        candidates.push(s);
       }
     }
-    if (!target) target = squads.reduce((a, b) => (a.size <= b.size ? a : b));
+    if (candidates.length === 0) candidates = [...squads];
+
+    const minSize = Math.min(...candidates.map((s) => s.size));
+    const tied = candidates.filter((s) => s.size === minSize);
+    const target = rng ? tied[Math.floor(rng() * tied.length)] : tied[0];
 
     target.memberIds.push(m.id);
     target.totalPhysical = round(target.totalPhysical + m.physicalScore);
@@ -119,4 +137,41 @@ export function distributeMembers(
   }
 
   return { squads, assignment };
+}
+
+const spreadOf = (values: number[]) => Math.max(...values) - Math.min(...values);
+
+/** Overall imbalance of a distribution (lower = better): summed spreads. */
+export function imbalanceOf(squads: SquadLoad[], scoreScale = 12): number {
+  let total =
+    spreadOf(squads.map((s) => s.totalPhysical)) / scoreScale +
+    spreadOf(squads.map((s) => s.totalMental)) / scoreScale;
+  const allBuckets = new Set(squads.flatMap((s) => Object.keys(s.counts)));
+  for (const b of allBuckets) total += spreadOf(squads.map((s) => s.counts[b] ?? 0));
+  return total;
+}
+
+/**
+ * Run the greedy balancer several times and keep the best-balanced result.
+ * With `rng` set, each attempt differs (random tie-breaks) so regenerating
+ * yields a fresh — but still well-balanced — split. Without `rng` it is a
+ * single deterministic run.
+ */
+export function distributeBalanced(
+  members: DistributableMember[],
+  numSquads: number,
+  options: DistributeOptions & { attempts?: number } = {},
+): DistributionResult {
+  const attempts = options.attempts ?? (options.rng ? 16 : 1);
+  let best: DistributionResult | null = null;
+  let bestScore = Infinity;
+  for (let i = 0; i < attempts; i++) {
+    const result = distributeMembers(members, numSquads, options);
+    const score = imbalanceOf(result.squads, options.scoreScale ?? 12);
+    if (score < bestScore) {
+      bestScore = score;
+      best = result;
+    }
+  }
+  return best!;
 }

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { requireActiveCamp } from "@/lib/camp";
-import { distributeMembers } from "@/lib/scoring";
+import { distributeBalanced } from "@/lib/scoring";
 import { ageGroup } from "@/lib/member-utils";
 import { SQUAD_COLORS } from "@/lib/enums";
 import { generateSchema, fieldErrors } from "@/lib/validation";
@@ -73,7 +73,7 @@ export async function generateTeamsAction(
   // Balance across every categorical axis at once: gender, residence, height,
   // build and age band (date of birth) — plus the physical/mental scores.
   const now = new Date();
-  const result = distributeMembers(
+  const result = distributeBalanced(
     members.map((m) => ({
       id: m.id,
       physicalScore: m.physicalScore,
@@ -87,6 +87,8 @@ export async function generateTeamsAction(
       ].filter((g): g is string => Boolean(g)),
     })),
     numSquads,
+    // Fresh shuffle each press; keep the best-balanced of many fast attempts.
+    { rng: Math.random, attempts: 60 },
   );
 
   await prisma.$transaction(async (tx) => {
