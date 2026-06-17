@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Plus, Pencil, Trash2, Crown, Users, X, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, Crown, Users, X, Check, ChevronRight } from "lucide-react";
 import { createSquadAction, updateSquadAction, deleteSquadAction } from "@/lib/actions/squads";
 import { type ActionState } from "@/lib/actions/types";
 import { useDialogAction } from "@/lib/use-dialog-action";
@@ -48,8 +49,11 @@ export function SquadsView({
           <CardContent className="space-y-3">
             <div className="flex items-start gap-3">
               <span className="mt-1 size-5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-base font-semibold text-slate-900">{s.name}</h3>
+              <Link href={`/squads/${s.id}`} className="min-w-0 flex-1 group">
+                <h3 className="flex items-center gap-1 truncate text-base font-semibold text-slate-900 group-hover:text-brand-700">
+                  {s.name}
+                  <ChevronRight className="size-4 text-slate-300" />
+                </h3>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <Users className="size-3.5" /> {s.members}
@@ -61,7 +65,7 @@ export function SquadsView({
                   )}
                   {s.assistantName && <span>Помічник: {s.assistantName}</span>}
                 </div>
-              </div>
+              </Link>
               {s.canManage && (
                 <div className="flex shrink-0 gap-1">
                   <EditSquadDialog squad={s} leaders={leaders} canChangeLeader={canChangeLeader} />

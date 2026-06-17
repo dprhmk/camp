@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { requireActiveCamp } from "@/lib/camp";
@@ -119,5 +119,10 @@ export async function generateTeamsAction(
     }
   });
 
-  redirect("/squads");
+  // Stay on the page and refresh the team tiles so the director can compare
+  // and regenerate repeatedly.
+  revalidatePath("/generate");
+  revalidatePath("/squads");
+  revalidatePath("/members");
+  return { ok: true };
 }

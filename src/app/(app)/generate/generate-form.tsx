@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { SubmitButton } from "@/components/form/submit-button";
+import { useToast } from "@/components/ui/toast";
 
 type Leader = { id: string; name: string };
 
@@ -26,6 +27,11 @@ export function GenerateForm({
   // Selected leader account id per squad ("" = none).
   const [selected, setSelected] = React.useState<string[]>([]);
   const [state, formAction] = useActionState(generateTeamsAction, initialActionState);
+  const toast = useToast();
+
+  React.useEffect(() => {
+    if (state.ok) toast({ type: "success", message: "Команди згенеровано" });
+  }, [state, toast]);
 
   // Only the currently visible squad slots count toward "already taken".
   const visible = Array.from({ length: count }, (_, i) => selected[i] ?? "");
