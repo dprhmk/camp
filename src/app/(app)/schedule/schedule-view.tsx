@@ -144,7 +144,7 @@ function EntryDialog({ entry, trigger }: { entry?: Entry; trigger: React.ReactNo
             <Field label="День" htmlFor="date" required error={err.date}>
               <Input id="date" name="date" type="date" defaultValue={entry?.date.slice(0, 10)} aria-invalid={!!err.date} />
             </Field>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
               <Field label="Початок" htmlFor="startTime" required error={err.startTime}>
                 <Input id="startTime" name="startTime" type="time" defaultValue={entry?.startTime} aria-invalid={!!err.startTime} />
               </Field>

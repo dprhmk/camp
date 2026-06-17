@@ -34,6 +34,22 @@ textarea {
   font-size: 16px;
 }
 
+/*
+ * iOS WebKit (Safari + iOS Chrome) gives native date/time inputs a large
+ * intrinsic min-width that ignores width:100%, so they overflow narrow
+ * containers (dialogs). Neutralise it ONLY on iOS — desktop keeps the native
+ * picker indicators. `@supports (-webkit-touch-callout)` matches iOS only.
+ */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"],
+  input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 /* Safe-area padding for installed PWA on notched phones. */
 .pb-safe {
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
