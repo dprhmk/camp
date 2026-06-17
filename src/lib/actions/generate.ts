@@ -31,7 +31,13 @@ export async function generateTeamsAction(
 
   const members = await prisma.member.findMany({
     where: { campId: camp.id },
-    select: { id: true, physicalScore: true, mentalScore: true },
+    select: {
+      id: true,
+      physicalScore: true,
+      mentalScore: true,
+      gender: true,
+      residenceType: true,
+    },
   });
 
   if (members.length === 0) {
@@ -60,7 +66,16 @@ export async function generateTeamsAction(
     : [];
   const leaderById = new Map(leaderUsers.map((u) => [u.id, u.name]));
 
-  const result = distributeMembers(members, numSquads);
+  const result = distributeMembers(
+    members.map((m) => ({
+      id: m.id,
+      physicalScore: m.physicalScore,
+      mentalScore: m.mentalScore,
+      gender: m.gender,
+      residence: m.residenceType,
+    })),
+    numSquads,
+  );
 
   await prisma.$transaction(async (tx) => {
     // Replace existing squads (members are detached by onDelete: SetNull).

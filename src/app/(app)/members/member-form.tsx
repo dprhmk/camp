@@ -11,17 +11,22 @@ import { SubmitButton } from "@/components/form/submit-button";
 import { PhotoUpload } from "@/components/form/photo-upload";
 import { useToast } from "@/components/ui/toast";
 import {
+  BUILD_DEFAULT,
   BUILD_OPTIONS,
   GENDER_OPTIONS,
   HEIGHT_DEFAULT,
   HEIGHT_OPTIONS,
+  RESIDENCE_DEFAULT,
   RESIDENCE_OPTIONS,
+  SCALE_DEFAULT,
   SCALE_OPTIONS,
   type Option,
 } from "@/lib/enums";
 
 // Loose value bag from the DB record (or empty for a new member).
 export type MemberValues = Record<string, unknown>;
+// Squads that already have a leader child: squadId -> { memberId, name }.
+export type SquadLeaders = Record<string, { memberId: string; name: string }>;
 
 const str = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const bool = (v: unknown) => v === true;
@@ -30,16 +35,27 @@ export function MemberForm({
   action,
   values = {},
   squads,
+  squadLeaders = {},
+  currentMemberId,
   submitLabel,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   values?: MemberValues;
   squads: { id: string; name: string }[];
+  squadLeaders?: SquadLeaders;
+  currentMemberId?: string;
   submitLabel: string;
 }) {
   const [state, formAction] = useActionState(action, initialActionState);
   const toast = useToast();
   const err = state.fieldErrors ?? {};
+
+  // Controlled so the "leader" lock reacts to the chosen squad.
+  const [squadId, setSquadId] = React.useState(str(values.squadId));
+  const [isLeader, setIsLeader] = React.useState(bool(values.isLeader));
+
+  const existingLeader = squadId ? squadLeaders[squadId] : undefined;
+  const leaderLocked = !!existingLeader && existingLeader.memberId !== currentMemberId;
 
   React.useEffect(() => {
     if (state.ok) toast({ type: "success", message: "Збережено" });
@@ -69,8 +85,17 @@ export function MemberForm({
               aria-invalid={!!err.dateOfBirth}
             />
           </Field>
+          {/* Gender required, but defaults to the blank "—" so it's a conscious choice. */}
           <SelectField name="gender" label="Стать" required options={GENDER_OPTIONS} def={values.gender} err={err.gender} />
-          <SelectField name="residenceType" label="Тип проживання" required options={RESIDENCE_OPTIONS} def={values.residenceType} err={err.residenceType} />
+          <SelectField
+            name="residenceType"
+            label="Тип проживання"
+            required
+            options={RESIDENCE_OPTIONS}
+            def={str(values.residenceType) || RESIDENCE_DEFAULT}
+            err={err.residenceType}
+            allowEmpty={false}
+          />
         </div>
       </Section>
 
@@ -98,12 +123,31 @@ export function MemberForm({
             err={err.height}
             allowEmpty={false}
           />
-          <SelectField name="build" label="Статура" required options={BUILD_OPTIONS} def={values.build} err={err.build} />
+          <SelectField
+            name="build"
+            label="Статура"
+            required
+            options={BUILD_OPTIONS}
+            def={str(values.build) || BUILD_DEFAULT}
+            err={err.build}
+            allowEmpty={false}
+          />
         </div>
         <Checkbox name="doesSports" label="Займається спортом" defaultChecked={bool(values.doesSports)} />
       </Section>
 
       <Section title="Розумова">
+        <div className="space-y-1">
+          <Checkbox
+            name="isExceptional"
+            label="Особливий"
+            defaultChecked={bool(values.isExceptional)}
+          />
+          <p className="px-1 text-xs text-slate-500">
+            Особливий = дитина з особливостями; помітно знижує розумовий бал для справедливого
+            розподілу.
+          </p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <ScaleField name="creativity" label="Творчість" def={values.creativity} err={err.creativity} />
           <ScaleField name="communication" label="Комунікація" def={values.communication} err={err.communication} />
@@ -117,21 +161,38 @@ export function MemberForm({
           <Area name="physicalRestrictions" label="Фізичні обмеження" def={values.physicalRestrictions} err={err.physicalRestrictions} />
           <Area name="medicalNotes" label="Нотатки" def={values.medicalNotes} err={err.medicalNotes} />
         </div>
-        <Checkbox name="isExceptional" label="Особливий" defaultChecked={bool(values.isExceptional)} />
       </Section>
 
       <Section title="Загін">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField
+        <Field label="Загін" htmlFor="squadId" error={err.squadId}>
+          <Select
+            id="squadId"
             name="squadId"
-            label="Загін"
-            options={squads.map((s) => ({ value: s.id, label: s.name }))}
-            def={values.squadId}
-            err={err.squadId}
-            emptyLabel="Без загону"
+            value={squadId}
+            onChange={(e) => setSquadId(e.target.value)}
+          >
+            <option value="">Без загону</option>
+            {squads.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="space-y-1">
+          <Checkbox
+            name="isLeader"
+            label="Лідер загону"
+            checked={!leaderLocked && isLeader}
+            onChange={(e) => setIsLeader(e.target.checked)}
+            disabled={leaderLocked}
           />
+          {leaderLocked && (
+            <p className="px-1 text-xs text-amber-600">
+              У цьому загоні вже є лідер: {existingLeader?.name}. Спершу зніміть лідерство з нього.
+            </p>
+          )}
         </div>
-        <Checkbox name="isLeader" label="Лідер загону" defaultChecked={bool(values.isLeader)} />
       </Section>
 
       {/* Sticky submit bar */}
@@ -222,6 +283,13 @@ function SelectField({
 
 function ScaleField({ name, label, def, err }: { name: string; label: string; def?: unknown; err?: string }) {
   return (
-    <SelectField name={name} label={label} options={SCALE_OPTIONS} def={def} err={err} emptyLabel="Не вказано" />
+    <SelectField
+      name={name}
+      label={label}
+      options={SCALE_OPTIONS}
+      def={str(def) || SCALE_DEFAULT}
+      err={err}
+      allowEmpty={false}
+    />
   );
 }

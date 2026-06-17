@@ -38,5 +38,6 @@ export async function POST(request: Request) {
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, name), Buffer.from(await file.arrayBuffer()));
 
-  return NextResponse.json({ url: `/uploads/${name}` });
+  // Served via the photo route (Next prod doesn't serve runtime public/ files).
+  return NextResponse.json({ url: `/api/photo/${name}` });
 }

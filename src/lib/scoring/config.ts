@@ -14,6 +14,7 @@ export type ScoringConfig = {
   };
   mental: {
     traitWeight: number; // per point of creativity / communication (1..5)
+    exceptionalFactor: number; // multiplier applied when the child is "особливий"
   };
 };
 
@@ -26,6 +27,9 @@ export const defaultScoringConfig: ScoringConfig = {
   },
   mental: {
     traitWeight: 1,
+    // "Особливий" = a child with special needs — strongly lowers the mental
+    // score so the balancer spreads such children evenly across squads.
+    exceptionalFactor: 0.5,
   },
 };
 

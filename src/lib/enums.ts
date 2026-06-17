@@ -28,6 +28,7 @@ export const RESIDENCE_OPTIONS: Option[] = [
   { value: "BUILDING", label: "У корпусі" },
   { value: "HOME", label: "Удома (приходить)" },
 ];
+export const RESIDENCE_DEFAULT = "BUILDING";
 
 // Зріст — a coarse level (was a numeric cm field).
 export const HEIGHT_OPTIONS: Option[] = [
@@ -43,6 +44,7 @@ export const BUILD_OPTIONS: Option[] = [
   { value: "AVERAGE", label: "Середня" },
   { value: "HEAVY", label: "Повна" },
 ];
+export const BUILD_DEFAULT = "AVERAGE";
 
 // 1..5 scales used by the scored profile traits (creativity, communication).
 export const SCALE_OPTIONS: Option[] = [
@@ -52,6 +54,7 @@ export const SCALE_OPTIONS: Option[] = [
   { value: "4", label: "4 — високий" },
   { value: "5", label: "5 — дуже високий" },
 ];
+export const SCALE_DEFAULT = "3"; // середній
 
 /** Look up a label by value within an option list (falls back to the value). */
 export function labelOf(options: Option[], value: string | null | undefined): string {

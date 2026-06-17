@@ -11,6 +11,7 @@ export type ScorableMember = {
   // Mental ("розумова / креативна"), 1..5
   creativity?: number | null;
   communication?: number | null;
+  isExceptional?: boolean | null; // "особливий" — lowers the mental score
 };
 
 const num = (v: number | null | undefined) => (typeof v === "number" ? v : 0);
@@ -36,7 +37,8 @@ export function computeMentalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
-  const raw = (num(m.creativity) + num(m.communication)) * config.mental.traitWeight;
+  let raw = (num(m.creativity) + num(m.communication)) * config.mental.traitWeight;
+  if (m.isExceptional) raw *= config.mental.exceptionalFactor;
   const max = mentalRawMax(config);
   return round(Math.max(0, (raw / max) * config.scaleMax));
 }

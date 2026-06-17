@@ -35,6 +35,11 @@ describe("computeMentalScore", () => {
   it("is half the ceiling for half the points", () => {
     expect(computeMentalScore({ creativity: 5 })).toBe(5);
   });
+
+  it("'особливий' lowers the mental score by the configured factor", () => {
+    // full 10 × 0.5 -> 5
+    expect(computeMentalScore({ creativity: 5, communication: 5, isExceptional: true })).toBe(5);
+  });
 });
 
 describe("raw maxima", () => {
@@ -69,6 +74,8 @@ describe("distributeMembers", () => {
       id: `m${i}`,
       physicalScore: (i % 5) + 1,
       mentalScore: ((i + 2) % 5) + 1,
+      gender: i % 2 === 0 ? "MALE" : "FEMALE",
+      residence: i % 3 === 0 ? "HOME" : "BUILDING",
     }));
 
   it("assigns every member exactly once", () => {
@@ -86,6 +93,18 @@ describe("distributeMembers", () => {
     const { squads } = distributeMembers(make(80), 5);
     const totals = squads.map((s) => s.totalPhysical + s.totalMental);
     expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(10);
+  });
+
+  it("spreads gender and residence evenly across squads", () => {
+    const { squads } = distributeMembers(make(48), 4);
+    const countIn = (s: (typeof squads)[number], bucket: string) => s.counts[bucket] ?? 0;
+    // Greedy multi-objective balance with a hard headcount cap: within ~2 on
+    // adversarial (score-correlated) data — far tighter than random (~5-6) and
+    // typically ±1 on real uncorrelated data.
+    for (const bucket of ["g:MALE", "g:FEMALE", "r:HOME", "r:BUILDING"]) {
+      const counts = squads.map((s) => countIn(s, bucket));
+      expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(2);
+    }
   });
 
   it("is deterministic", () => {

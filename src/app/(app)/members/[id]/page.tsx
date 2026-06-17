@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { can, canManageMember } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { updateMemberAction } from "@/lib/actions/members";
+import { getSquadLeaders } from "@/lib/leaders";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { Alert } from "@/components/ui/feedback";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,11 +33,14 @@ export default async function MemberPage({
   const editable = canManageMember(user, member);
   const createAny = can(user, "member:createAny");
 
-  const squads = await prisma.squad.findMany({
-    where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [squads, squadLeaders] = await Promise.all([
+    prisma.squad.findMany({
+      where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    getSquadLeaders(camp.id),
+  ]);
 
   return (
     <Container>
@@ -85,6 +89,8 @@ export default async function MemberPage({
           action={updateMemberAction.bind(null, member.id)}
           values={{ ...member, dateOfBirth: member.dateOfBirth?.toISOString() ?? "" }}
           squads={squads}
+          squadLeaders={squadLeaders}
+          currentMemberId={member.id}
           submitLabel="Зберегти зміни"
         />
       ) : (

@@ -76,6 +76,22 @@ async function uniqueCode(campId: string): Promise<string> {
   return generateCode(8);
 }
 
+/** A squad may have at most one leader child. */
+async function squadHasOtherLeader(campId: string, squadId: string, excludeMemberId?: string) {
+  const other = await prisma.member.findFirst({
+    where: {
+      campId,
+      squadId,
+      isLeader: true,
+      ...(excludeMemberId ? { id: { not: excludeMemberId } } : {}),
+    },
+    select: { id: true },
+  });
+  return Boolean(other);
+}
+
+const ONE_LEADER_MSG = "У цьому загоні вже є лідер загону — спершу зніміть лідерство з нього.";
+
 export async function createMemberAction(
   _prev: ActionState,
   formData: FormData,
@@ -93,6 +109,14 @@ export async function createMemberAction(
         ? "Не вдалося визначити загін"
         : "Ви можете додавати учасників лише у свій загін",
     };
+  }
+
+  if (
+    parsed.data.isLeader &&
+    parsed.data.squadId &&
+    (await squadHasOtherLeader(camp.id, parsed.data.squadId))
+  ) {
+    return { ok: false, message: ONE_LEADER_MSG };
   }
 
   const code = await uniqueCode(camp.id);
@@ -132,6 +156,14 @@ export async function updateMemberAction(
     if (target !== member.squadId && !(await assertCanAssign(user, parsed.data.squadId))) {
       return { ok: false, message: "Ви не можете перемістити учасника до чужого загону" };
     }
+  }
+
+  if (
+    parsed.data.isLeader &&
+    parsed.data.squadId &&
+    (await squadHasOtherLeader(camp.id, parsed.data.squadId, memberId))
+  ) {
+    return { ok: false, message: ONE_LEADER_MSG };
   }
 
   const previousSquadId = member.squadId;

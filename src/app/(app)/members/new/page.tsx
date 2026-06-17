@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { createMemberAction } from "@/lib/actions/members";
+import { getSquadLeaders } from "@/lib/leaders";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { Alert } from "@/components/ui/feedback";
 import { MemberForm } from "../member-form";
@@ -12,11 +13,14 @@ export default async function NewMemberPage() {
   const camp = await requireActiveCamp();
   const createAny = can(user, "member:createAny");
 
-  const squads = await prisma.squad.findMany({
-    where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [squads, squadLeaders] = await Promise.all([
+    prisma.squad.findMany({
+      where: { campId: camp.id, ...(createAny ? {} : { leaderUserId: user.id }) },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    getSquadLeaders(camp.id),
+  ]);
 
   return (
     <Container>
@@ -26,7 +30,12 @@ export default async function NewMemberPage() {
           До вас ще не привʼязано загін. Зверніться до директора, щоб додавати учасників.
         </Alert>
       ) : (
-        <MemberForm action={createMemberAction} squads={squads} submitLabel="Створити учасника" />
+        <MemberForm
+          action={createMemberAction}
+          squads={squads}
+          squadLeaders={squadLeaders}
+          submitLabel="Створити учасника"
+        />
       )}
     </Container>
   );
