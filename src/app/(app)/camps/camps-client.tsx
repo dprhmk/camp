@@ -52,7 +52,7 @@ export function CreateCampDialog() {
             <Field label="Рік" htmlFor="year" required error={state.fieldErrors?.year}>
               <Input id="year" name="year" type="number" inputMode="numeric" defaultValue={2026} aria-invalid={!!state.fieldErrors?.year} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Початок" htmlFor="startDate" error={state.fieldErrors?.startDate}>
                 <Input id="startDate" name="startDate" type="date" />
               </Field>
