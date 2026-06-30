@@ -16,6 +16,8 @@ import {
   GENDER_OPTIONS,
   HEIGHT_DEFAULT,
   HEIGHT_OPTIONS,
+  AGILITY_DEFAULT,
+  AGILITY_OPTIONS,
   RESIDENCE_DEFAULT,
   RESIDENCE_OPTIONS,
   SCALE_DEFAULT,
@@ -150,18 +152,15 @@ export function MemberForm({
             err={err.strength}
             allowEmpty={false}
           />
-          <Field label="Спритність (сек)" htmlFor="agilitySeconds" required error={err.agilitySeconds}>
-            <Input
-              id="agilitySeconds"
-              name="agilitySeconds"
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              min="0"
-              defaultValue={str(values.agilitySeconds)}
-              aria-invalid={!!err.agilitySeconds}
-            />
-          </Field>
+          <SelectField
+            name="agility"
+            label="Спритність"
+            required
+            options={AGILITY_OPTIONS}
+            def={str(values.agility) || AGILITY_DEFAULT}
+            err={err.agility}
+            allowEmpty={false}
+          />
         </div>
       </Section>
 

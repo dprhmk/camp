@@ -6,11 +6,6 @@ export type Option<T extends string = string> = { value: T; label: string };
 export const ROLES = ["SUPER_ADMIN", "USER"] as const;
 export type Role = (typeof ROLES)[number];
 
-export const ROLE_OPTIONS: Option<Role>[] = [
-  { value: "USER", label: "Користувач" },
-  { value: "SUPER_ADMIN", label: "Супер-адмін" },
-];
-
 export const ROLE_LABEL: Record<Role, string> = {
   SUPER_ADMIN: "Супер-адмін",
   USER: "Користувач",
@@ -51,6 +46,14 @@ export const STRENGTH_OPTIONS: Option[] = [
   { value: "STRONG", label: "Сильний" },
 ];
 export const STRENGTH_DEFAULT = "NORMAL";
+
+// Спритність — three levels (was a seconds value).
+export const AGILITY_OPTIONS: Option[] = [
+  { value: "SLOW", label: "Повільний" },
+  { value: "MEDIUM", label: "Середній" },
+  { value: "FAST", label: "Швидкий" },
+];
+export const AGILITY_DEFAULT = "MEDIUM";
 
 // 1..3 scales used by the scored profile traits (creativity, communication).
 export const SCALE_OPTIONS: Option[] = [

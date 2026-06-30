@@ -15,6 +15,7 @@ const RESIDENCE = ["BUILDING", "HOME"];
 const HEIGHTS = ["LOW", "MEDIUM", "HIGH"];
 const BUILD = ["SLIM", "AVERAGE", "HEAVY"];
 const STRENGTH = ["WEAK", "NORMAL", "STRONG"];
+const AGILITY = ["SLOW", "MEDIUM", "FAST"];
 const LAST = ["Шевченко", "Коваленко", "Бондаренко", "Ткаченко", "Кравчук", "Мельник", "Поліщук", "Савченко", "Руденко", "Левченко"];
 const MALE_NAMES = ["Андрій", "Богдан", "Іван", "Максим", "Назар", "Олег", "Петро", "Тарас"];
 const FEMALE_NAMES = ["Анна", "Дарина", "Катерина", "Марія", "Олена", "Софія", "Юлія", "Ярина"];
@@ -41,42 +42,22 @@ async function main() {
 
   const hash = (p: string) => bcrypt.hash(p, 10);
 
-  // One super-admin by default; every other account is a plain USER.
+  // Exactly one super-admin plus five plain USER accounts.
   const admin = await prisma.user.create({
     data: { name: "Супер Адмін", email: "admin@camp.local", role: "SUPER_ADMIN", passwordHash: await hash("admin12345") },
   });
-  await prisma.user.create({
-    data: { name: "Користувач", email: "user@camp.local", role: "USER", passwordHash: await hash("user12345") },
-  });
-  // Four squad leaders (вожатий 1..4) + two assistants each (помічник N.1 / N.2)
-  // — plain USER accounts; the squad binding is just an organisational label.
-  const leaders: { id: string }[] = [];
-  const assistants: { id: string }[][] = [];
-  for (let i = 1; i <= 4; i++) {
-    leaders.push(
+  const users: { id: string }[] = [];
+  for (let i = 1; i <= 5; i++) {
+    users.push(
       await prisma.user.create({
         data: {
-          name: `Вожатий ${i}`,
-          email: `leader${i}@camp.local`,
+          name: `Користувач ${i}`,
+          email: `user${i}@camp.local`,
           role: "USER",
-          passwordHash: await hash("leader12345"),
+          passwordHash: await hash("user12345"),
         },
       }),
     );
-    const pair: { id: string }[] = [];
-    for (let j = 1; j <= 2; j++) {
-      pair.push(
-        await prisma.user.create({
-          data: {
-            name: `Помічник ${i}.${j}`,
-            email: `assistant${i}-${j}@camp.local`,
-            role: "USER",
-            passwordHash: await hash("assistant12345"),
-          },
-        }),
-      );
-    }
-    assistants.push(pair);
   }
 
   const camp = await prisma.camp.create({
@@ -89,7 +70,8 @@ async function main() {
     },
   });
 
-  // Four squads, each with a leader account + two assistant accounts.
+  // Four squads; the leader binding is just an organisational label (cycled
+  // through the user accounts), no longer permission-bearing.
   const squadNames = ["Орли", "Леви", "Соколи", "Вовки"];
   const squads = [];
   for (let i = 0; i < squadNames.length; i++) {
@@ -99,9 +81,7 @@ async function main() {
           campId: camp.id,
           name: squadNames[i],
           color: SQUAD_COLORS[i],
-          leaderUserId: leaders[i].id,
-          assistant1UserId: assistants[i][0].id,
-          assistant2UserId: assistants[i][1].id,
+          leaderUserId: users[i % users.length].id,
         },
       }),
     );
@@ -115,7 +95,8 @@ async function main() {
     return c;
   };
 
-  // 30 members per squad (120 total); a few incomplete; two with birthdays this week.
+  // 30 members per squad (120 total); every profile is fully filled in so the
+  // team distribution is never blocked. Two have a birthday in the demo week.
   const PER_SQUAD = 30;
   const TOTAL = squads.length * PER_SQUAD;
   for (let i = 0; i < TOTAL; i++) {
@@ -123,15 +104,12 @@ async function main() {
     const firstName = gender === "MALE" ? pick(MALE_NAMES) : pick(FEMALE_NAMES);
     const lastName = pick(LAST);
     const squad = squads[Math.floor(i / PER_SQUAD)]; // exactly 30 per squad
-    const complete = i % 7 !== 0; // ~1 in 7 left incomplete
 
     // Two members get a birthday in the current demo week (June 2026).
     const dob =
       i < 2
         ? new Date(2014, 5, 8 + i)
-        : complete
-          ? new Date(2010 + (i % 6), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 27))
-          : null;
+        : new Date(2010 + (i % 6), Math.floor(rnd() * 12), 1 + Math.floor(rnd() * 27));
 
     const profile = {
       gender,
@@ -140,10 +118,10 @@ async function main() {
       height: pick(HEIGHTS),
       build: pick(BUILD),
       strength: pick(STRENGTH),
-      agilitySeconds: Math.round((8 + rnd() * 8) * 10) / 10, // 8.0..16.0 s
+      agility: pick(AGILITY),
       // Mental ("розумова / креативна") scale inputs (1..3).
-      creativity: complete ? scale() : null,
-      communication: complete ? scale() : null,
+      creativity: scale(),
+      communication: scale(),
       // Дитина віруючих батьків (ДВБ) — profile flag.
       isFromBelievingFamily: chance(0.4),
     };

@@ -11,7 +11,7 @@ export type SquadSummary = {
   building: number;
   home: number;
   dvb: number;
-  avgAgility: number | null;
+  fast: number;
   ageBands: Record<string, number>;
   avgPhysical: number;
   avgMental: number;
@@ -46,7 +46,7 @@ export function SquadSummaries({ squads }: { squads: SquadSummary[] }) {
                 <span>🏠 Корпус: <b>{s.building}</b></span>
                 <span>🚶 Вдома: <b>{s.home}</b></span>
                 <span>✝ ДВБ: <b>{s.dvb}</b></span>
-                {s.avgAgility != null && <span>⚡ Спритність: <b>{r1(s.avgAgility)}с</b></span>}
+                <span>⚡ Швидкі: <b>{s.fast}</b></span>
               </div>
 
               <div className="flex flex-wrap gap-1.5 pt-0.5">

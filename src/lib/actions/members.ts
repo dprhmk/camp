@@ -45,7 +45,7 @@ function toData(input: MemberInput) {
     height: input.height ?? null,
     build: input.build ?? null,
     strength: input.strength ?? null,
-    agilitySeconds: input.agilitySeconds ?? null,
+    agility: input.agility ?? null,
     creativity: input.creativity ?? null,
     communication: input.communication ?? null,
     isFromBelievingFamily: input.isFromBelievingFamily ?? false,

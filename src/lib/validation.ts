@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
+  AGILITY_OPTIONS,
   BUILD_OPTIONS,
   GENDER_OPTIONS,
   HEIGHT_OPTIONS,
   RESIDENCE_OPTIONS,
-  ROLES,
   STRENGTH_OPTIONS,
 } from "./enums";
 
@@ -22,11 +22,6 @@ const scale = z
   .union([z.literal(""), z.coerce.number().int().min(1, "Від 1 до 3").max(3, "Від 1 до 3")])
   .optional()
   .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
-
-// Спритність — run time in seconds (lower = faster). Required, positive.
-const agility = z.coerce
-  .number({ message: "Вкажіть спритність у секундах" })
-  .positive("Має бути більше 0");
 
 // A required select: empty -> message; must be one of the allowed values.
 const requiredOneOf = (values: readonly string[], message: string) =>
@@ -52,7 +47,8 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const userSchema = z.object({
   name: requiredText("Введіть імʼя"),
   email: z.string().trim().min(1, "Введіть email").pipe(z.email("Некоректний email")),
-  role: z.enum(ROLES as unknown as [string, ...string[]]),
+  // Role is not user-editable — every account created via the UI is a USER and
+  // the lone super-admin is seeded. So the schema deliberately omits `role`.
   password: z
     .string()
     .min(6, "Пароль щонайменше 6 символів")
@@ -140,7 +136,7 @@ export const memberSchema = z.object({
   height: requiredOneOf(HEIGHT_OPTIONS.map((o) => o.value), "Оберіть зріст"),
   build: requiredOneOf(BUILD_OPTIONS.map((o) => o.value), "Оберіть статуру"),
   strength: requiredOneOf(STRENGTH_OPTIONS.map((o) => o.value), "Оберіть силу"),
-  agilitySeconds: agility,
+  agility: requiredOneOf(AGILITY_OPTIONS.map((o) => o.value), "Оберіть спритність"),
 
   // Mental ("розумова / креативна") — two scored traits (1..3).
   creativity: scale,

@@ -6,7 +6,7 @@ import { Search, Star, Crown, ChevronRight, SearchX } from "lucide-react";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/feedback";
 import { cn, displayName, fullName } from "@/lib/utils";
-import { STRENGTH_OPTIONS } from "@/lib/enums";
+import { AGILITY_OPTIONS, STRENGTH_OPTIONS } from "@/lib/enums";
 
 type MemberRow = {
   id: string;
@@ -18,7 +18,7 @@ type MemberRow = {
   isProfileComplete: boolean;
   hasBirthday: boolean;
   strength: string | null;
-  agilitySeconds: number | null;
+  agility: string | null;
   isFromBelievingFamily: boolean;
   physicalScore: number;
   mentalScore: number;
@@ -36,28 +36,24 @@ export function MembersList({
   const [squadId, setSquadId] = React.useState("");
   const [incompleteOnly, setIncompleteOnly] = React.useState(false);
   const [strength, setStrength] = React.useState("");
+  const [agility, setAgility] = React.useState("");
   const [dvbOnly, setDvbOnly] = React.useState(false);
-  const [maxAgility, setMaxAgility] = React.useState("");
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    const agilityLimit = maxAgility.trim() === "" ? null : Number(maxAgility);
     return members.filter((m) => {
       if (squadId === "none" && m.squad) return false;
       if (squadId && squadId !== "none" && m.squad?.id !== squadId) return false;
       if (incompleteOnly && m.isProfileComplete) return false;
       if (strength && m.strength !== strength) return false;
+      if (agility && m.agility !== agility) return false;
       if (dvbOnly && !m.isFromBelievingFamily) return false;
-      // Спритність: keep members at or faster than the threshold (lower = faster).
-      if (agilityLimit !== null && !Number.isNaN(agilityLimit)) {
-        if (m.agilitySeconds === null || m.agilitySeconds > agilityLimit) return false;
-      }
       if (!q) return true;
       return (
         fullName(m).toLowerCase().includes(q) || m.code.toLowerCase().includes(q)
       );
     });
-  }, [members, query, squadId, incompleteOnly, strength, dvbOnly, maxAgility]);
+  }, [members, query, squadId, incompleteOnly, strength, agility, dvbOnly]);
 
   return (
     <div className="space-y-3">
@@ -92,16 +88,14 @@ export function MembersList({
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Input
-            value={maxAgility}
-            onChange={(e) => setMaxAgility(e.target.value)}
-            type="number"
-            inputMode="decimal"
-            step="0.1"
-            min="0"
-            placeholder="Спритність до (сек)"
-            className="flex-1"
-          />
+          <Select value={agility} onChange={(e) => setAgility(e.target.value)} className="flex-1">
+            <option value="">Будь-яка спритність</option>
+            {AGILITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <label className="flex items-center gap-2 px-1 text-sm text-slate-600">

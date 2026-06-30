@@ -25,7 +25,7 @@ export default async function GeneratePage() {
         gender: true,
         residenceType: true,
         dateOfBirth: true,
-        agilitySeconds: true,
+        agility: true,
         isFromBelievingFamily: true,
         physicalScore: true,
         mentalScore: true,
@@ -54,9 +54,7 @@ export default async function GeneratePage() {
       building: list.filter((m) => m.residenceType === "BUILDING").length,
       home: list.filter((m) => m.residenceType === "HOME").length,
       dvb: list.filter((m) => m.isFromBelievingFamily).length,
-      avgAgility: list.some((m) => m.agilitySeconds != null)
-        ? sum((m) => m.agilitySeconds ?? 0) / (list.filter((m) => m.agilitySeconds != null).length || 1)
-        : null,
+      fast: list.filter((m) => m.agility === "FAST").length,
       ageBands,
       avgPhysical: sum((m) => m.physicalScore) / n,
       avgMental: sum((m) => m.mentalScore) / n,

@@ -128,8 +128,8 @@ model Member {
   // --- Physical (feeds the physical scale) ---------------------------------
   height         String? // "LOW" | "MEDIUM" | "HIGH"
   build          String? // "SLIM" | "AVERAGE" | "HEAVY"
-  strength       String? // "WEAK" | "NORMAL" | "STRONG" — сила
-  agilitySeconds Float?  // спритність — run time in seconds (lower = faster)
+  strength String? // "WEAK" | "NORMAL" | "STRONG" — сила
+  agility  String? // "SLOW" | "MEDIUM" | "FAST" — спритність
 
   // --- Mental / creative (feeds the mental scale), 1..3 --------------------
   creativity    Int?

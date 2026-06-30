@@ -27,7 +27,7 @@ export const COMPLETE_FIELDS: (keyof MemberInput)[] = [
   "height",
   "build",
   "strength",
-  "agilitySeconds",
+  "agility",
   // Mental scale inputs
   "creativity",
   "communication",
@@ -66,33 +66,6 @@ export function ageGroup(
 
 // Age bands in display order (for per-squad breakdowns).
 export const AGE_BANDS = ["≤9", "10-11", "12-13", "14-15", "16+"] as const;
-
-// Agility bands, relative to the cohort (terciles): fast / mid / slow.
-export const AGILITY_BANDS = ["fast", "mid", "slow"] as const;
-export type AgilityBand = (typeof AGILITY_BANDS)[number];
-
-/**
- * Build a "which agility band" function from the whole cohort's run times.
- * Splitting at the 1/3 and 2/3 quantiles makes each band roughly a third of
- * the members, so the team balancer can spread fast and slow children evenly.
- */
-export function makeAgilityBander(
-  seconds: (number | null | undefined)[],
-): (v: number | null | undefined) => AgilityBand | null {
-  const sorted = seconds
-    .filter((v): v is number => typeof v === "number")
-    .sort((a, b) => a - b);
-  const q = (p: number) =>
-    sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] : Infinity;
-  const t1 = q(1 / 3);
-  const t2 = q(2 / 3);
-  return (v) => {
-    if (typeof v !== "number") return null;
-    if (v <= t1) return "fast";
-    if (v <= t2) return "mid";
-    return "slow";
-  };
-}
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I
 
