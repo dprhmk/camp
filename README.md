@@ -45,8 +45,7 @@ npm run dev             # http://localhost:3000
 | Role | Email | Password |
 |------|-------|----------|
 | Super-admin | `admin@camp.local` | `admin12345` |
-| User | `user@camp.local` | `user12345` |
-| User | `leader1@camp.local` | `leader12345` |
+| User | `user1@camp.local` … `user5@camp.local` | `user12345` |
 
 ## Scripts
 
