@@ -10,9 +10,13 @@ const MAX_BYTES = 6 * 1024 * 1024; // 6 MB (images are compressed client-side)
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
 /**
- * Stores an uploaded image on the local filesystem and returns its URL.
- * For production, replace this with Vercel Blob / Cloudflare R2 — only this
- * handler and the returned URL change; the rest of the app is unaffected.
+ * Stores an uploaded image and returns its URL.
+ *
+ * Two backends, chosen at runtime:
+ *  - Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set (production on Vercel,
+ *    where the filesystem is read-only/ephemeral). Returns an absolute Blob URL.
+ *  - Local filesystem otherwise (zero-setup local dev). Served back via
+ *    `/api/photo/[name]`.
  */
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -34,10 +38,20 @@ export async function POST(request: Request) {
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const name = `${randomUUID()}.${ext}`;
+
+  // Production: store in Vercel Blob (filesystem is read-only there).
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import("@vercel/blob");
+    const blob = await put(`members/${name}`, file, {
+      access: "public",
+      contentType: file.type,
+    });
+    return NextResponse.json({ url: blob.url });
+  }
+
+  // Local dev: store on disk, serve via /api/photo/[name].
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, name), Buffer.from(await file.arrayBuffer()));
-
-  // Served via the photo route (Next prod doesn't serve runtime public/ files).
   return NextResponse.json({ url: `/api/photo/${name}` });
 }

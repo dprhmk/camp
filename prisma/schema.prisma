@@ -1,11 +1,11 @@
 // Prisma schema for the camp management app.
 //
-// Local development uses SQLite for zero-setup reliability.
-// For production, switch `provider` to "postgresql" and point DATABASE_URL
-// at a managed Postgres (e.g. Neon). No model changes are required.
+// Postgres everywhere (Neon free tier in production; a Neon branch or local
+// Postgres for development). DATABASE_URL points at the database.
 //
-// Note: SQLite does not support Prisma `enum`. All enum-like fields are stored
-// as `String` and validated/typed at the application layer via Zod
+// Historical note: this project started on SQLite for zero-setup local dev.
+// Enum-like fields are still stored as `String` (a SQLite legacy that also keeps
+// the app DB-agnostic) and validated/typed at the application layer via Zod
 // (see src/lib/validation). The allowed values live in src/lib/enums.ts.
 
 generator client {
@@ -13,7 +13,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
