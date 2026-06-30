@@ -41,13 +41,15 @@ async function main() {
 
   const hash = (p: string) => bcrypt.hash(p, 10);
 
+  // One super-admin by default; every other account is a plain USER.
   const admin = await prisma.user.create({
     data: { name: "Супер Адмін", email: "admin@camp.local", role: "SUPER_ADMIN", passwordHash: await hash("admin12345") },
   });
   await prisma.user.create({
-    data: { name: "Директор Табору", email: "director@camp.local", role: "DIRECTOR", passwordHash: await hash("director123") },
+    data: { name: "Користувач", email: "user@camp.local", role: "USER", passwordHash: await hash("user12345") },
   });
-  // Four squad leaders (вожатий 1..4) + two assistants each (помічник N.1 / N.2).
+  // Four squad leaders (вожатий 1..4) + two assistants each (помічник N.1 / N.2)
+  // — plain USER accounts; the squad binding is just an organisational label.
   const leaders: { id: string }[] = [];
   const assistants: { id: string }[][] = [];
   for (let i = 1; i <= 4; i++) {
@@ -56,7 +58,7 @@ async function main() {
         data: {
           name: `Вожатий ${i}`,
           email: `leader${i}@camp.local`,
-          role: "LEADER",
+          role: "USER",
           passwordHash: await hash("leader12345"),
         },
       }),
@@ -68,7 +70,7 @@ async function main() {
           data: {
             name: `Помічник ${i}.${j}`,
             email: `assistant${i}-${j}@camp.local`,
-            role: "ASSISTANT",
+            role: "USER",
             passwordHash: await hash("assistant12345"),
           },
         }),

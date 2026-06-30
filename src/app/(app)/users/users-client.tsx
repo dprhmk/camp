@@ -72,7 +72,7 @@ function UserFields({ state, user }: { state: ActionState; user?: UserRow }) {
         <Input id="email" name="email" type="email" defaultValue={user?.email} aria-invalid={!!err.email} />
       </Field>
       <Field label="Роль" htmlFor="role" required error={err.role}>
-        <Select id="role" name="role" defaultValue={user?.role ?? "LEADER"}>
+        <Select id="role" name="role" defaultValue={user?.role ?? "USER"}>
           {ROLE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
