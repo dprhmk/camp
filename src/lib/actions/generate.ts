@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { requireActiveCamp } from "@/lib/camp";
 import { distributeBalanced } from "@/lib/scoring";
-import { ageGroup } from "@/lib/member-utils";
+import { ageGroup, makeAgilityBander } from "@/lib/member-utils";
 import { SQUAD_COLORS } from "@/lib/enums";
 import { generateSchema, fieldErrors } from "@/lib/validation";
 import type { ActionState } from "./types";
@@ -39,6 +39,8 @@ export async function generateTeamsAction(
       residenceType: true,
       height: true,
       build: true,
+      agilitySeconds: true,
+      isFromBelievingFamily: true,
       dateOfBirth: true,
     },
   });
@@ -59,8 +61,10 @@ export async function generateTeamsAction(
   }
 
   // Balance across every categorical axis at once: gender, residence, height,
-  // build and age band (date of birth) — plus the physical/mental scores.
+  // build, age band, agility band (fast/mid/slow) and ДВБ — plus the
+  // physical/mental scores (strength already feeds the physical score).
   const now = new Date();
+  const agilityBand = makeAgilityBander(members.map((m) => m.agilitySeconds));
   const result = distributeBalanced(
     members.map((m) => ({
       id: m.id,
@@ -72,6 +76,8 @@ export async function generateTeamsAction(
         m.height && `h:${m.height}`,
         m.build && `b:${m.build}`,
         ageGroup(m.dateOfBirth, now) && `age:${ageGroup(m.dateOfBirth, now)}`,
+        agilityBand(m.agilitySeconds) && `agi:${agilityBand(m.agilitySeconds)}`,
+        m.isFromBelievingFamily && "dvb:1",
       ].filter((g): g is string => Boolean(g)),
     })),
     numSquads,

@@ -10,6 +10,8 @@ export type SquadSummary = {
   female: number;
   building: number;
   home: number;
+  dvb: number;
+  avgAgility: number | null;
   ageBands: Record<string, number>;
   avgPhysical: number;
   avgMental: number;
@@ -43,6 +45,8 @@ export function SquadSummaries({ squads }: { squads: SquadSummary[] }) {
                 <span>♀ Дівчата: <b>{s.female}</b></span>
                 <span>🏠 Корпус: <b>{s.building}</b></span>
                 <span>🚶 Вдома: <b>{s.home}</b></span>
+                <span>✝ ДВБ: <b>{s.dvb}</b></span>
+                {s.avgAgility != null && <span>⚡ Спритність: <b>{r1(s.avgAgility)}с</b></span>}
               </div>
 
               <div className="flex flex-wrap gap-1.5 pt-0.5">
