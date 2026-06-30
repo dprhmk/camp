@@ -48,15 +48,21 @@ export const BUILD_OPTIONS: Option[] = [
 ];
 export const BUILD_DEFAULT = "AVERAGE";
 
-// 1..5 scales used by the scored profile traits (creativity, communication).
-export const SCALE_OPTIONS: Option[] = [
-  { value: "1", label: "1 — дуже низький" },
-  { value: "2", label: "2 — низький" },
-  { value: "3", label: "3 — середній" },
-  { value: "4", label: "4 — високий" },
-  { value: "5", label: "5 — дуже високий" },
+// Сила — three levels.
+export const STRENGTH_OPTIONS: Option[] = [
+  { value: "WEAK", label: "Слабкий" },
+  { value: "NORMAL", label: "Нормальний" },
+  { value: "STRONG", label: "Сильний" },
 ];
-export const SCALE_DEFAULT = "3"; // середній
+export const STRENGTH_DEFAULT = "NORMAL";
+
+// 1..3 scales used by the scored profile traits (creativity, communication).
+export const SCALE_OPTIONS: Option[] = [
+  { value: "1", label: "1 — низький" },
+  { value: "2", label: "2 — середній" },
+  { value: "3", label: "3 — високий" },
+];
+export const SCALE_DEFAULT = "2"; // середній
 
 /** Look up a label by value within an option list (falls back to the value). */
 export function labelOf(options: Option[], value: string | null | undefined): string {

@@ -6,18 +6,17 @@ export type ScorableMember = {
   // Physical
   height?: string | null; // "LOW" | "MEDIUM" | "HIGH"
   build?: string | null; // "SLIM" | "AVERAGE" | "HEAVY"
-  doesSports?: boolean | null;
+  strength?: string | null; // "WEAK" | "NORMAL" | "STRONG"
 
-  // Mental ("розумова / креативна"), 1..5
+  // Mental ("розумова / креативна"), 1..3
   creativity?: number | null;
   communication?: number | null;
-  isExceptional?: boolean | null; // "особливий" — lowers the mental score
 };
 
 const num = (v: number | null | undefined) => (typeof v === "number" ? v : 0);
 const round = (v: number) => Math.round(v * 100) / 100;
 
-/** Physical score: height level + build + sports, normalised to 0..scaleMax. */
+/** Physical score: height level + build + strength, normalised to 0..scaleMax. */
 export function computePhysicalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
@@ -26,7 +25,7 @@ export function computePhysicalScore(
   let raw = 0;
   if (m.height && c.height[m.height] != null) raw += c.height[m.height];
   if (m.build && c.build[m.build] != null) raw += c.build[m.build];
-  if (m.doesSports) raw += c.sportsBonus;
+  if (m.strength && c.strength[m.strength] != null) raw += c.strength[m.strength];
 
   const max = physicalRawMax(config);
   return round(Math.max(0, (raw / max) * config.scaleMax));
@@ -37,8 +36,7 @@ export function computeMentalScore(
   m: ScorableMember,
   config: ScoringConfig = defaultScoringConfig,
 ): number {
-  let raw = (num(m.creativity) + num(m.communication)) * config.mental.traitWeight;
-  if (m.isExceptional) raw *= config.mental.exceptionalFactor;
+  const raw = (num(m.creativity) + num(m.communication)) * config.mental.traitWeight;
   const max = mentalRawMax(config);
   return round(Math.max(0, (raw / max) * config.scaleMax));
 }

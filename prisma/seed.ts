@@ -14,6 +14,7 @@ const GENDERS = ["MALE", "FEMALE"];
 const RESIDENCE = ["BUILDING", "HOME"];
 const HEIGHTS = ["LOW", "MEDIUM", "HIGH"];
 const BUILD = ["SLIM", "AVERAGE", "HEAVY"];
+const STRENGTH = ["WEAK", "NORMAL", "STRONG"];
 const LAST = ["Шевченко", "Коваленко", "Бондаренко", "Ткаченко", "Кравчук", "Мельник", "Поліщук", "Савченко", "Руденко", "Левченко"];
 const MALE_NAMES = ["Андрій", "Богдан", "Іван", "Максим", "Назар", "Олег", "Петро", "Тарас"];
 const FEMALE_NAMES = ["Анна", "Дарина", "Катерина", "Марія", "Олена", "Софія", "Юлія", "Ярина"];
@@ -25,7 +26,7 @@ function rnd() {
   return seed / 0x7fffffff;
 }
 const pick = <T>(arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
-const scale = () => 1 + Math.floor(rnd() * 5); // 1..5
+const scale = () => 1 + Math.floor(rnd() * 3); // 1..3
 const chance = (p: number) => rnd() < p;
 
 async function main() {
@@ -136,12 +137,13 @@ async function main() {
       // Physical scale inputs (objective — always recorded).
       height: pick(HEIGHTS),
       build: pick(BUILD),
-      doesSports: chance(0.5),
-      // Mental ("розумова / креативна") scale inputs (1..5).
+      strength: pick(STRENGTH),
+      agilitySeconds: Math.round((8 + rnd() * 8) * 10) / 10, // 8.0..16.0 s
+      // Mental ("розумова / креативна") scale inputs (1..3).
       creativity: complete ? scale() : null,
       communication: complete ? scale() : null,
-      // Profile flag (not scored).
-      isExceptional: chance(0.15),
+      // Дитина віруючих батьків (ДВБ) — profile flag.
+      isFromBelievingFamily: chance(0.4),
     };
 
     const scores = computeScores(profile);

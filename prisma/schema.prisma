@@ -126,20 +126,23 @@ model Member {
   address           String?
 
   // --- Physical (feeds the physical scale) ---------------------------------
-  height     String? // "LOW" | "MEDIUM" | "HIGH"
-  build      String? // "SLIM" | "AVERAGE" | "HEAVY"
-  doesSports Boolean @default(false)
+  height         String? // "LOW" | "MEDIUM" | "HIGH"
+  build          String? // "SLIM" | "AVERAGE" | "HEAVY"
+  strength       String? // "WEAK" | "NORMAL" | "STRONG" — сила
+  agilitySeconds Float?  // спритність — run time in seconds (lower = faster)
 
-  // --- Mental / creative (feeds the mental scale), 1..5 --------------------
+  // --- Mental / creative (feeds the mental scale), 1..3 --------------------
   creativity    Int?
   communication Int?
+
+  // Дитина віруючих батьків (ДВБ) — profile flag, spread evenly across squads.
+  isFromBelievingFamily Boolean @default(false)
 
   // --- Medical & notes (profile info, not scored) --------------------------
   allergies            String?
   medicalRestrictions  String?
   physicalRestrictions String?
   medicalNotes         String?
-  isExceptional        Boolean @default(false) // "Особливий"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

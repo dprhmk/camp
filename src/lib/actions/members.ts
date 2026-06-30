@@ -45,14 +45,15 @@ function toData(input: MemberInput) {
     address: input.address ?? null,
     height: input.height ?? null,
     build: input.build ?? null,
-    doesSports: input.doesSports ?? false,
+    strength: input.strength ?? null,
+    agilitySeconds: input.agilitySeconds ?? null,
     creativity: input.creativity ?? null,
     communication: input.communication ?? null,
+    isFromBelievingFamily: input.isFromBelievingFamily ?? false,
     allergies: input.allergies ?? null,
     medicalRestrictions: input.medicalRestrictions ?? null,
     physicalRestrictions: input.physicalRestrictions ?? null,
     medicalNotes: input.medicalNotes ?? null,
-    isExceptional: input.isExceptional ?? false,
   };
 }
 

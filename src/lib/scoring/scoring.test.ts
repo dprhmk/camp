@@ -9,11 +9,11 @@ describe("computePhysicalScore", () => {
   });
 
   it("reaches the scale ceiling when everything is maxed", () => {
-    expect(computePhysicalScore({ height: "HIGH", build: "AVERAGE", doesSports: true })).toBe(10);
+    expect(computePhysicalScore({ height: "HIGH", build: "AVERAGE", strength: "STRONG" })).toBe(10);
   });
 
   it("normalises against the raw max", () => {
-    // MEDIUM(2) + SLIM(1) = 3 of 7 -> 4.29
+    // MEDIUM(2) + SLIM(1) = 3 of 8 -> 3.75
     const expected = Math.round(((3 / physicalRawMax()) * 10) * 100) / 100;
     expect(computePhysicalScore({ height: "MEDIUM", build: "SLIM" })).toBe(expected);
   });
@@ -29,28 +29,23 @@ describe("computeMentalScore", () => {
   });
 
   it("reaches the ceiling when both traits are maxed", () => {
-    expect(computeMentalScore({ creativity: 5, communication: 5 })).toBe(10);
+    expect(computeMentalScore({ creativity: 3, communication: 3 })).toBe(10);
   });
 
   it("is half the ceiling for half the points", () => {
-    expect(computeMentalScore({ creativity: 5 })).toBe(5);
-  });
-
-  it("'особливий' lowers the mental score by the configured factor", () => {
-    // full 10 × 0.5 -> 5
-    expect(computeMentalScore({ creativity: 5, communication: 5, isExceptional: true })).toBe(5);
+    expect(computeMentalScore({ creativity: 3 })).toBe(5);
   });
 });
 
 describe("raw maxima", () => {
   it("computes the physical and mental raw ceilings", () => {
-    expect(physicalRawMax()).toBe(7); // height 3 + build 2 + sports 2
-    expect(mentalRawMax()).toBe(10); // 2 traits × 5
+    expect(physicalRawMax()).toBe(8); // height 3 + build 2 + strength 3
+    expect(mentalRawMax()).toBe(6); // 2 traits × 3
   });
 
   it("scales with scaleMax", () => {
     const config = { ...defaultScoringConfig, scaleMax: 100 };
-    expect(computeMentalScore({ creativity: 5, communication: 5 }, config)).toBe(100);
+    expect(computeMentalScore({ creativity: 3, communication: 3 }, config)).toBe(100);
   });
 });
 
@@ -60,9 +55,9 @@ describe("computeScores", () => {
       computeScores({
         height: "HIGH",
         build: "AVERAGE",
-        doesSports: true,
-        creativity: 5,
-        communication: 5,
+        strength: "STRONG",
+        creativity: 3,
+        communication: 3,
       }),
     ).toEqual({ physicalScore: 10, mentalScore: 10 });
   });

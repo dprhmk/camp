@@ -20,6 +20,8 @@ import {
   RESIDENCE_OPTIONS,
   SCALE_DEFAULT,
   SCALE_OPTIONS,
+  STRENGTH_DEFAULT,
+  STRENGTH_OPTIONS,
   type Option,
 } from "@/lib/enums";
 
@@ -99,6 +101,11 @@ export function MemberForm({
             allowEmpty={false}
           />
         </div>
+        <Checkbox
+          name="isFromBelievingFamily"
+          label="ДВБ — дитина віруючих батьків"
+          defaultChecked={bool(values.isFromBelievingFamily)}
+        />
       </Section>
 
       <Section title="Контакти">
@@ -134,22 +141,31 @@ export function MemberForm({
             err={err.build}
             allowEmpty={false}
           />
+          <SelectField
+            name="strength"
+            label="Сила"
+            required
+            options={STRENGTH_OPTIONS}
+            def={str(values.strength) || STRENGTH_DEFAULT}
+            err={err.strength}
+            allowEmpty={false}
+          />
+          <Field label="Спритність (сек)" htmlFor="agilitySeconds" required error={err.agilitySeconds}>
+            <Input
+              id="agilitySeconds"
+              name="agilitySeconds"
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min="0"
+              defaultValue={str(values.agilitySeconds)}
+              aria-invalid={!!err.agilitySeconds}
+            />
+          </Field>
         </div>
-        <Checkbox name="doesSports" label="Займається спортом" defaultChecked={bool(values.doesSports)} />
       </Section>
 
       <Section title="Розумова">
-        <div className="space-y-1">
-          <Checkbox
-            name="isExceptional"
-            label="Особливий"
-            defaultChecked={bool(values.isExceptional)}
-          />
-          <p className="px-1 text-xs text-slate-500">
-            Особливий = дитина з особливостями; помітно знижує розумовий бал для справедливого
-            розподілу.
-          </p>
-        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <ScaleField name="creativity" label="Творчість" def={values.creativity} err={err.creativity} />
           <ScaleField name="communication" label="Комунікація" def={values.communication} err={err.communication} />

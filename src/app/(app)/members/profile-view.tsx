@@ -6,6 +6,7 @@ import {
   GENDER_OPTIONS,
   HEIGHT_OPTIONS,
   RESIDENCE_OPTIONS,
+  STRENGTH_OPTIONS,
   labelOf,
 } from "@/lib/enums";
 
@@ -41,6 +42,7 @@ export function ProfileView({ m }: { m: Member }) {
         <Row label="Дата народження" value={formatDate(m.dateOfBirth)} />
         <Row label="Стать" value={labelOf(GENDER_OPTIONS, m.gender)} />
         <Row label="Тип проживання" value={labelOf(RESIDENCE_OPTIONS, m.residenceType)} />
+        <Row label="ДВБ" value={yn(m.isFromBelievingFamily)} />
       </Group>
 
       <Group title="Контакти">
@@ -57,7 +59,8 @@ export function ProfileView({ m }: { m: Member }) {
       <Group title="Фізичне">
         <Row label="Зріст" value={labelOf(HEIGHT_OPTIONS, m.height)} />
         <Row label="Статура" value={labelOf(BUILD_OPTIONS, m.build)} />
-        <Row label="Займається спортом" value={yn(m.doesSports)} />
+        <Row label="Сила" value={labelOf(STRENGTH_OPTIONS, m.strength)} />
+        <Row label="Спритність (сек)" value={num(m.agilitySeconds)} />
       </Group>
 
       <Group title="Розумова">
@@ -70,7 +73,6 @@ export function ProfileView({ m }: { m: Member }) {
         <Row label="Медичні обмеження" value={text(m.medicalRestrictions)} />
         <Row label="Фізичні обмеження" value={text(m.physicalRestrictions)} />
         <Row label="Нотатки" value={text(m.medicalNotes)} />
-        <Row label="Особливий" value={yn(m.isExceptional)} />
       </Group>
     </div>
   );
