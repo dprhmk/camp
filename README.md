@@ -45,9 +45,8 @@ npm run dev             # http://localhost:3000
 | Role | Email | Password |
 |------|-------|----------|
 | Super-admin | `admin@camp.local` | `admin12345` |
-| Director | `director@camp.local` | `director123` |
-| Leader | `leader1@camp.local` | `leader12345` |
-| Leader | `leader2@camp.local` | `leader12345` |
+| User | `user@camp.local` | `user12345` |
+| User | `leader1@camp.local` | `leader12345` |
 
 ## Scripts
 
@@ -67,17 +66,17 @@ npm run dev             # http://localhost:3000
 Roles grant a **scope of actions** — they never hide profile sections. Anyone
 who may edit a member sees and fills in all of that member's fields.
 
-| Action | Super-admin | Director | Leader |
-|--------|:-:|:-:|:-:|
-| Create / delete camps, system settings | ✅ | — | — |
-| Manage accounts | ✅ | — | — |
-| Manage any squad / change leaders | ✅ | ✅ | own squad only |
-| Generate teams | ✅ | ✅ | — |
-| Edit schedule | ✅ | ✅ | view |
-| Add / delete members | ✅ | ✅ | in own squad |
+| Action | Super-admin | User |
+|--------|:-:|:-:|
+| Create / delete camps, system settings | ✅ | — |
+| Manage accounts | ✅ | — |
+| Manage squads / change leaders | ✅ | view |
+| Generate teams | ✅ | — |
+| Edit schedule | ✅ | view |
+| Add / edit / delete any member | ✅ | ✅ |
 
-A leader is bound to a squad via `Squad.leaderUserId` (per season), so the same
-account can lead different squads in different camps.
+A squad's leader/assistant accounts (`Squad.leaderUserId` etc.) are an
+organisational label only — they no longer grant any permissions.
 
 ## Architecture notes
 
