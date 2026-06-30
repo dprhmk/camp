@@ -91,12 +91,12 @@ organisational label only — they no longer grant any permissions.
 
 ## Production
 
-Recommended: **Vercel + Neon (Postgres) + Vercel Blob**.
+Deployed live on **Vercel + Neon (Postgres) + Vercel Blob** (all free tier):
 
-1. In `prisma/schema.prisma` set `provider = "postgresql"`.
-2. Set `DATABASE_URL` (Postgres) and a strong `AUTH_SECRET`.
-3. Replace the upload handler with a Blob/R2 implementation.
-4. `npm run db:migrate` against the Postgres instance, then deploy.
+- **https://camp-khaki-five.vercel.app**
+
+Schema, photo storage and env are already wired for this. See **[DEPLOY.md](DEPLOY.md)**
+for how to redeploy, apply schema changes, re-seed and run local dev.
 
 ## Assumptions to confirm
 
