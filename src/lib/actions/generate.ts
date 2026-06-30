@@ -39,6 +39,8 @@ export async function generateTeamsAction(
       residenceType: true,
       height: true,
       build: true,
+      agility: true,
+      isFromBelievingFamily: true,
       dateOfBirth: true,
     },
   });
@@ -59,7 +61,8 @@ export async function generateTeamsAction(
   }
 
   // Balance across every categorical axis at once: gender, residence, height,
-  // build and age band (date of birth) — plus the physical/mental scores.
+  // build, age band, agility (slow/medium/fast) and ДВБ — plus the
+  // physical/mental scores (strength already feeds the physical score).
   const now = new Date();
   const result = distributeBalanced(
     members.map((m) => ({
@@ -72,6 +75,8 @@ export async function generateTeamsAction(
         m.height && `h:${m.height}`,
         m.build && `b:${m.build}`,
         ageGroup(m.dateOfBirth, now) && `age:${ageGroup(m.dateOfBirth, now)}`,
+        m.agility && `agi:${m.agility}`,
+        m.isFromBelievingFamily && "dvb:1",
       ].filter((g): g is string => Boolean(g)),
     })),
     numSquads,

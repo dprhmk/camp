@@ -2,17 +2,14 @@ import { notFound } from "next/navigation";
 import { Crown } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { can, canManageMember, ownSquadFilter } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { updateMemberAction } from "@/lib/actions/members";
 import { getSquadLeaders } from "@/lib/leaders";
 import { Container, PageHeader } from "@/components/layout/page-header";
-import { Alert } from "@/components/ui/feedback";
 import { Card, CardContent } from "@/components/ui/card";
 import { displayName } from "@/lib/utils";
 import { StatsScales } from "@/components/stats-scales";
 import { MemberForm } from "../member-form";
-import { ProfileView } from "../profile-view";
 import { DeleteMemberButton } from "./delete-member";
 
 export default async function MemberPage({
@@ -21,32 +18,18 @@ export default async function MemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await requireUser();
+  await requireUser();
   const camp = await requireActiveCamp();
 
   const member = await prisma.member.findUnique({
     where: { id },
-    include: {
-      squad: {
-        select: {
-          id: true,
-          name: true,
-          color: true,
-          leaderUserId: true,
-          assistant1UserId: true,
-          assistant2UserId: true,
-        },
-      },
-    },
+    include: { squad: { select: { id: true, name: true, color: true } } },
   });
   if (!member || member.campId !== camp.id) notFound();
 
-  const editable = canManageMember(user, member);
-  const createAny = can(user, "member:createAny");
-
   const [squads, squadLeaders] = await Promise.all([
     prisma.squad.findMany({
-      where: { campId: camp.id, ...(createAny ? {} : ownSquadFilter(user.id)) },
+      where: { campId: camp.id },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
@@ -58,7 +41,7 @@ export default async function MemberPage({
       <PageHeader
         title={displayName(member)}
         back="/members"
-        action={editable ? <DeleteMemberButton id={member.id} /> : undefined}
+        action={<DeleteMemberButton id={member.id} />}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
@@ -91,28 +74,18 @@ export default async function MemberPage({
         </CardContent>
       </Card>
 
-      {editable ? (
-        <MemberForm
-          // Remount with fresh server values after each successful save so the
-          // uncontrolled fields don't keep React 19's post-action reset to the
-          // stale mount-time defaults. updatedAt changes only on a real save.
-          key={member.updatedAt.toISOString()}
-          action={updateMemberAction.bind(null, member.id)}
-          values={{ ...member, dateOfBirth: member.dateOfBirth?.toISOString() ?? "" }}
-          squads={squads}
-          squadLeaders={squadLeaders}
-          currentMemberId={member.id}
-          submitLabel="Зберегти зміни"
-        />
-      ) : (
-        <>
-          <Alert variant="info" className="mb-4">
-            Ви можете переглядати цього учасника, але керувати ним може лише його вожатий або
-            директор.
-          </Alert>
-          <ProfileView m={member} />
-        </>
-      )}
+      <MemberForm
+        // Remount with fresh server values after each successful save so the
+        // uncontrolled fields don't keep React 19's post-action reset to the
+        // stale mount-time defaults. updatedAt changes only on a real save.
+        key={member.updatedAt.toISOString()}
+        action={updateMemberAction.bind(null, member.id)}
+        values={{ ...member, dateOfBirth: member.dateOfBirth?.toISOString() ?? "" }}
+        squads={squads}
+        squadLeaders={squadLeaders}
+        currentMemberId={member.id}
+        submitLabel="Зберегти зміни"
+      />
     </Container>
   );
 }

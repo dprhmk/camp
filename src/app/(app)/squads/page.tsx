@@ -24,11 +24,12 @@ export default async function SquadsPage() {
         assistant2User: { select: { name: true } },
       },
     }),
+    // Staff binding is just a label now — any account can be picked.
     canChangeLeader
-      ? prisma.user.findMany({ where: { role: "LEADER" }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+      ? prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
       : Promise.resolve([]),
     canChangeLeader
-      ? prisma.user.findMany({ where: { role: "ASSISTANT" }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+      ? prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
       : Promise.resolve([]),
     prisma.member.groupBy({
       by: ["squadId"],
@@ -81,7 +82,7 @@ export default async function SquadsPage() {
               assistant1Name: s.assistant1User?.name ?? null,
               assistant2Name: s.assistant2User?.name ?? null,
               members: s._count.members,
-              canManage: canManageSquad(user, s),
+              canManage: canManageSquad(user),
               physicalScore: avg?.physicalScore ?? 0,
               mentalScore: avg?.mentalScore ?? 0,
             };

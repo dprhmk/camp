@@ -68,8 +68,8 @@ export async function updateSquadAction(
 
   const squad = await prisma.squad.findFirst({ where: { id: squadId, campId: camp.id } });
   if (!squad) return { ok: false, message: "Загін не знайдено" };
-  if (!canManageSquad(user, squad)) {
-    return { ok: false, message: "Ви можете керувати лише своїм загоном" };
+  if (!canManageSquad(user)) {
+    return { ok: false, message: "Недостатньо прав для редагування загону" };
   }
 
   const parsed = squadSchema.safeParse({

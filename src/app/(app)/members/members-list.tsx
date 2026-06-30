@@ -6,6 +6,7 @@ import { Search, Star, Crown, ChevronRight, SearchX } from "lucide-react";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/feedback";
 import { cn, displayName, fullName } from "@/lib/utils";
+import { AGILITY_OPTIONS, STRENGTH_OPTIONS } from "@/lib/enums";
 
 type MemberRow = {
   id: string;
@@ -16,6 +17,9 @@ type MemberRow = {
   isLeader: boolean;
   isProfileComplete: boolean;
   hasBirthday: boolean;
+  strength: string | null;
+  agility: string | null;
+  isFromBelievingFamily: boolean;
   physicalScore: number;
   mentalScore: number;
   squad: { id: string; name: string; color: string } | null;
@@ -31,6 +35,9 @@ export function MembersList({
   const [query, setQuery] = React.useState("");
   const [squadId, setSquadId] = React.useState("");
   const [incompleteOnly, setIncompleteOnly] = React.useState(false);
+  const [strength, setStrength] = React.useState("");
+  const [agility, setAgility] = React.useState("");
+  const [dvbOnly, setDvbOnly] = React.useState(false);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -38,12 +45,15 @@ export function MembersList({
       if (squadId === "none" && m.squad) return false;
       if (squadId && squadId !== "none" && m.squad?.id !== squadId) return false;
       if (incompleteOnly && m.isProfileComplete) return false;
+      if (strength && m.strength !== strength) return false;
+      if (agility && m.agility !== agility) return false;
+      if (dvbOnly && !m.isFromBelievingFamily) return false;
       if (!q) return true;
       return (
         fullName(m).toLowerCase().includes(q) || m.code.toLowerCase().includes(q)
       );
     });
-  }, [members, query, squadId, incompleteOnly]);
+  }, [members, query, squadId, incompleteOnly, strength, agility, dvbOnly]);
 
   return (
     <div className="space-y-3">
@@ -68,16 +78,45 @@ export function MembersList({
             ))}
             <option value="none">Без загону</option>
           </Select>
+          <Select value={strength} onChange={(e) => setStrength(e.target.value)} className="flex-1">
+            <option value="">Будь-яка сила</option>
+            {STRENGTH_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
         </div>
-        <label className="flex items-center gap-2 px-1 text-sm text-slate-600">
-          <input
-            type="checkbox"
-            checked={incompleteOnly}
-            onChange={(e) => setIncompleteOnly(e.target.checked)}
-            className="size-4 rounded border-slate-300 text-brand-600"
-          />
-          Лише незаповнені анкети
-        </label>
+        <div className="flex items-center gap-2">
+          <Select value={agility} onChange={(e) => setAgility(e.target.value)} className="flex-1">
+            <option value="">Будь-яка спритність</option>
+            {AGILITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 px-1 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={incompleteOnly}
+              onChange={(e) => setIncompleteOnly(e.target.checked)}
+              className="size-4 rounded border-slate-300 text-brand-600"
+            />
+            Лише незаповнені анкети
+          </label>
+          <label className="flex items-center gap-2 px-1 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={dvbOnly}
+              onChange={(e) => setDvbOnly(e.target.checked)}
+              className="size-4 rounded border-slate-300 text-brand-600"
+            />
+            Лише ДВБ
+          </label>
+        </div>
       </div>
 
       {members.length === 0 ? (

@@ -8,10 +8,12 @@ import { Container, PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/feedback";
 import { ageYears } from "@/lib/member-utils";
 import { displayName } from "@/lib/utils";
-import { BUILD_OPTIONS, HEIGHT_OPTIONS, labelOf } from "@/lib/enums";
+import { AGILITY_OPTIONS, BUILD_OPTIONS, HEIGHT_OPTIONS, STRENGTH_OPTIONS, labelOf } from "@/lib/enums";
 
 const HEIGHT_SHORT: Record<string, string> = { LOW: "Н", MEDIUM: "С", HIGH: "В" };
 const BUILD_SHORT: Record<string, string> = { SLIM: "Худ", AVERAGE: "Сер", HEAVY: "Повн" };
+const STRENGTH_SHORT: Record<string, string> = { WEAK: "Сл", NORMAL: "Норм", STRONG: "Сильн" };
+const AGILITY_SHORT: Record<string, string> = { SLOW: "Пов", MEDIUM: "Сер", FAST: "Швид" };
 
 export default async function SquadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,12 +39,13 @@ export default async function SquadPage({ params }: { params: Promise<{ id: stri
       firstName: true,
       middleName: true,
       isLeader: true,
-      isExceptional: true,
+      isFromBelievingFamily: true,
       gender: true,
       dateOfBirth: true,
       height: true,
       build: true,
-      doesSports: true,
+      strength: true,
+      agility: true,
       physicalScore: true,
       mentalScore: true,
     },
@@ -89,10 +92,11 @@ export default async function SquadPage({ params }: { params: Promise<{ id: stri
                 <th className="px-2 py-2 text-center font-medium" title="Вік">Вік</th>
                 <th className="px-2 py-2 text-center font-medium" title="Зріст">Зр</th>
                 <th className="px-2 py-2 text-center font-medium" title="Статура">Стат</th>
-                <th className="px-2 py-2 text-center font-medium" title="Займається спортом">Спорт</th>
+                <th className="px-2 py-2 text-center font-medium" title="Сила">Сила</th>
+                <th className="px-2 py-2 text-center font-medium" title="Спритність (сек)">Спр</th>
                 <th className="px-2 py-2 text-center font-medium" title="Фізична">💪</th>
                 <th className="px-2 py-2 text-center font-medium" title="Розумова">🧠</th>
-                <th className="px-2 py-2 text-center font-medium" title="Особливий">Особл</th>
+                <th className="px-2 py-2 text-center font-medium" title="Дитина віруючих батьків">ДВБ</th>
               </tr>
             </thead>
             <tbody>
@@ -112,10 +116,11 @@ export default async function SquadPage({ params }: { params: Promise<{ id: stri
                   <td className="px-2 py-2 text-center text-slate-600">{ageYears(m.dateOfBirth, now) ?? "—"}</td>
                   <td className="px-2 py-2 text-center text-slate-600" title={labelOf(HEIGHT_OPTIONS, m.height)}>{m.height ? HEIGHT_SHORT[m.height] : "—"}</td>
                   <td className="px-2 py-2 text-center text-slate-600" title={labelOf(BUILD_OPTIONS, m.build)}>{m.build ? BUILD_SHORT[m.build] : "—"}</td>
-                  <td className="px-2 py-2 text-center">{m.doesSports ? "✅" : "—"}</td>
+                  <td className="px-2 py-2 text-center text-slate-600" title={labelOf(STRENGTH_OPTIONS, m.strength)}>{m.strength ? STRENGTH_SHORT[m.strength] : "—"}</td>
+                  <td className="px-2 py-2 text-center text-slate-600" title={labelOf(AGILITY_OPTIONS, m.agility)}>{m.agility ? AGILITY_SHORT[m.agility] : "—"}</td>
                   <td className="px-2 py-2 text-center font-semibold text-sky-700">{m.physicalScore}</td>
                   <td className="px-2 py-2 text-center font-semibold text-violet-700">{m.mentalScore}</td>
-                  <td className="px-2 py-2 text-center">{m.isExceptional ? "●" : ""}</td>
+                  <td className="px-2 py-2 text-center">{m.isFromBelievingFamily ? "✝" : ""}</td>
                 </tr>
               ))}
             </tbody>

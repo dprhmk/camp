@@ -26,6 +26,8 @@ export const COMPLETE_FIELDS: (keyof MemberInput)[] = [
   // Physical scale inputs
   "height",
   "build",
+  "strength",
+  "agility",
   // Mental scale inputs
   "creativity",
   "communication",

@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { BUILD_OPTIONS, GENDER_OPTIONS, HEIGHT_OPTIONS, RESIDENCE_OPTIONS, ROLES } from "./enums";
+import {
+  AGILITY_OPTIONS,
+  BUILD_OPTIONS,
+  GENDER_OPTIONS,
+  HEIGHT_OPTIONS,
+  RESIDENCE_OPTIONS,
+  STRENGTH_OPTIONS,
+} from "./enums";
 
 // Empty form fields arrive as "" — treat them as "not provided".
 const optionalText = z
@@ -10,9 +17,9 @@ const optionalText = z
 
 const requiredText = (message: string) => z.string().trim().min(1, message);
 
-// A 1..5 scale that accepts "" / numbers / numeric strings.
+// A 1..3 scale that accepts "" / numbers / numeric strings.
 const scale = z
-  .union([z.literal(""), z.coerce.number().int().min(1, "Від 1 до 5").max(5, "Від 1 до 5")])
+  .union([z.literal(""), z.coerce.number().int().min(1, "Від 1 до 3").max(3, "Від 1 до 3")])
   .optional()
   .transform((v) => (v === "" || v === undefined ? undefined : (v as number)));
 
@@ -40,7 +47,8 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const userSchema = z.object({
   name: requiredText("Введіть імʼя"),
   email: z.string().trim().min(1, "Введіть email").pipe(z.email("Некоректний email")),
-  role: z.enum(ROLES as unknown as [string, ...string[]]),
+  // Role is not user-editable — every account created via the UI is a USER and
+  // the lone super-admin is seeded. So the schema deliberately omits `role`.
   password: z
     .string()
     .min(6, "Пароль щонайменше 6 символів")
@@ -124,21 +132,24 @@ export const memberSchema = z.object({
   otherSocial: optionalText,
   address: optionalText,
 
-  // Physical — required: height level + build; plus the "does sports" flag.
+  // Physical — required: height level, build, strength and agility (seconds).
   height: requiredOneOf(HEIGHT_OPTIONS.map((o) => o.value), "Оберіть зріст"),
   build: requiredOneOf(BUILD_OPTIONS.map((o) => o.value), "Оберіть статуру"),
-  doesSports: boolish,
+  strength: requiredOneOf(STRENGTH_OPTIONS.map((o) => o.value), "Оберіть силу"),
+  agility: requiredOneOf(AGILITY_OPTIONS.map((o) => o.value), "Оберіть спритність"),
 
-  // Mental ("розумова / креативна") — two scored traits (1..5).
+  // Mental ("розумова / креативна") — two scored traits (1..3).
   creativity: scale,
   communication: scale,
+
+  // Дитина віруючих батьків (ДВБ) — profile flag.
+  isFromBelievingFamily: boolish,
 
   // Medical & notes (profile info, not scored).
   allergies: optionalText,
   medicalRestrictions: optionalText,
   physicalRestrictions: optionalText,
   medicalNotes: optionalText,
-  isExceptional: boolish, // "Особливий"
 
   // System
   squadId: optionalText,

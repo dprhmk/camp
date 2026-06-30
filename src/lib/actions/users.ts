@@ -17,7 +17,6 @@ export async function createUserAction(
   const parsed = userSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    role: formData.get("role"),
     password: formData.get("password"),
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
@@ -31,7 +30,8 @@ export async function createUserAction(
       data: {
         name: parsed.data.name,
         email: parsed.data.email.toLowerCase(),
-        role: parsed.data.role,
+        // Every account created via the UI is a plain USER.
+        role: "USER",
         passwordHash: await hashPassword(parsed.data.password),
       },
     });
@@ -56,7 +56,6 @@ export async function updateUserAction(
   const parsed = userSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    role: formData.get("role"),
     password: formData.get("password"),
   });
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
@@ -67,7 +66,7 @@ export async function updateUserAction(
       data: {
         name: parsed.data.name,
         email: parsed.data.email.toLowerCase(),
-        role: parsed.data.role,
+        // Role is intentionally never changed here.
         // Only set a new password when one was provided.
         ...(parsed.data.password
           ? { passwordHash: await hashPassword(parsed.data.password) }

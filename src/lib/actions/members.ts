@@ -4,13 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { can, canManageMember, canManageSquad } from "@/lib/rbac";
+import { can, canManageMember } from "@/lib/rbac";
 import { requireActiveCamp } from "@/lib/camp";
 import { recomputeSquadTotalsMany } from "@/lib/aggregates";
 import { computeScores } from "@/lib/scoring";
 import { generateCode, isProfileComplete } from "@/lib/member-utils";
 import { fieldErrors, memberSchema, type MemberInput } from "@/lib/validation";
-import type { SessionUser } from "@/lib/session";
 import type { ActionState } from "./types";
 
 function parseDate(value?: string) {
@@ -45,23 +44,16 @@ function toData(input: MemberInput) {
     address: input.address ?? null,
     height: input.height ?? null,
     build: input.build ?? null,
-    doesSports: input.doesSports ?? false,
+    strength: input.strength ?? null,
+    agility: input.agility ?? null,
     creativity: input.creativity ?? null,
     communication: input.communication ?? null,
+    isFromBelievingFamily: input.isFromBelievingFamily ?? false,
     allergies: input.allergies ?? null,
     medicalRestrictions: input.medicalRestrictions ?? null,
     physicalRestrictions: input.physicalRestrictions ?? null,
     medicalNotes: input.medicalNotes ?? null,
-    isExceptional: input.isExceptional ?? false,
   };
-}
-
-/** A leader may only assign members to a squad they lead. */
-async function assertCanAssign(user: SessionUser, squadId: string | undefined) {
-  if (can(user, "member:createAny")) return true;
-  if (!squadId) return false;
-  const squad = await prisma.squad.findUnique({ where: { id: squadId } });
-  return squad ? canManageSquad(user, squad) : false;
 }
 
 async function uniqueCode(campId: string): Promise<string> {
@@ -93,18 +85,12 @@ export async function createMemberAction(
 ): Promise<ActionState> {
   const user = await requireUser();
   const camp = await requireActiveCamp();
+  if (!can(user, "member:createAny")) {
+    return { ok: false, message: "Недостатньо прав для додавання учасників" };
+  }
 
   const parsed = memberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
-
-  if (!(await assertCanAssign(user, parsed.data.squadId))) {
-    return {
-      ok: false,
-      message: can(user, "member:createAny")
-        ? "Не вдалося визначити загін"
-        : "Ви можете додавати учасників лише у свій загін",
-    };
-  }
 
   const code = await uniqueCode(camp.id);
   const member = await prisma.member.create({
@@ -132,23 +118,14 @@ export async function updateMemberAction(
 
   const member = await prisma.member.findFirst({
     where: { id: memberId, campId: camp.id },
-    include: { squad: { select: { leaderUserId: true, assistant1UserId: true, assistant2UserId: true } } },
   });
   if (!member) return { ok: false, message: "Учасника не знайдено" };
-  if (!canManageMember(user, member)) {
+  if (!canManageMember(user)) {
     return { ok: false, message: "Недостатньо прав для редагування цього учасника" };
   }
 
   const parsed = memberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
-
-  // A leader cannot move a member into a squad they don't lead.
-  if (!can(user, "member:createAny")) {
-    const target = parsed.data.squadId ?? null;
-    if (target !== member.squadId && !(await assertCanAssign(user, parsed.data.squadId))) {
-      return { ok: false, message: "Ви не можете перемістити учасника до чужого загону" };
-    }
-  }
 
   const previousSquadId = member.squadId;
   const updated = await prisma.member.update({
@@ -173,10 +150,9 @@ export async function deleteMemberAction(memberId: string) {
   const camp = await requireActiveCamp();
   const member = await prisma.member.findFirst({
     where: { id: memberId, campId: camp.id },
-    include: { squad: { select: { leaderUserId: true, assistant1UserId: true, assistant2UserId: true } } },
   });
   if (!member) return;
-  if (!canManageMember(user, member)) return;
+  if (!canManageMember(user)) return;
 
   await prisma.member.delete({ where: { id: memberId } });
   await recomputeSquadTotalsMany([member.squadId]);

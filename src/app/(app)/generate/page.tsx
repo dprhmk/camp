@@ -25,6 +25,8 @@ export default async function GeneratePage() {
         gender: true,
         residenceType: true,
         dateOfBirth: true,
+        agility: true,
+        isFromBelievingFamily: true,
         physicalScore: true,
         mentalScore: true,
       },
@@ -51,6 +53,8 @@ export default async function GeneratePage() {
       female: list.filter((m) => m.gender === "FEMALE").length,
       building: list.filter((m) => m.residenceType === "BUILDING").length,
       home: list.filter((m) => m.residenceType === "HOME").length,
+      dvb: list.filter((m) => m.isFromBelievingFamily).length,
+      fast: list.filter((m) => m.agility === "FAST").length,
       ageBands,
       avgPhysical: sum((m) => m.physicalScore) / n,
       avgMental: sum((m) => m.mentalScore) / n,
@@ -62,7 +66,7 @@ export default async function GeneratePage() {
       <PageHeader
         title="Розподіл команд"
         back="/squads"
-        description="Балансує стать, проживання, вік, зріст, статуру та бали. Тисніть «Згенерувати», щоб перетасувати."
+        description="Балансує стать, проживання, вік, зріст, статуру, силу, спритність та ДВБ. Тисніть «Згенерувати», щоб перетасувати."
       />
       {memberCount === 0 ? (
         <Alert variant="info">

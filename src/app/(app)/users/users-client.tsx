@@ -8,11 +8,11 @@ import { type ActionState } from "@/lib/actions/types";
 import { useDialogAction } from "@/lib/use-dialog-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ROLE_LABEL, ROLE_OPTIONS, type Role } from "@/lib/enums";
+import { ROLE_LABEL, type Role } from "@/lib/enums";
 
 type UserRow = { id: string; name: string; email: string; role: string };
 
@@ -70,15 +70,6 @@ function UserFields({ state, user }: { state: ActionState; user?: UserRow }) {
       </Field>
       <Field label="Email" htmlFor="email" required error={err.email}>
         <Input id="email" name="email" type="email" defaultValue={user?.email} aria-invalid={!!err.email} />
-      </Field>
-      <Field label="Роль" htmlFor="role" required error={err.role}>
-        <Select id="role" name="role" defaultValue={user?.role ?? "LEADER"}>
-          {ROLE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
       </Field>
       <Field
         label={user ? "Новий пароль" : "Пароль"}
