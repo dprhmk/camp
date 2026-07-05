@@ -8,6 +8,7 @@ import { getSquadLeaders } from "@/lib/leaders";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { displayName } from "@/lib/utils";
+import { qrSvg } from "@/lib/qr";
 import { StatsScales } from "@/components/stats-scales";
 import { MemberForm } from "../member-form";
 import { DeleteMemberButton } from "./delete-member";
@@ -45,7 +46,11 @@ export default async function MemberPage({
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-slate-700">
+        <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 py-1 pl-1.5 pr-2.5 font-mono text-slate-700">
+          <span
+            className="size-16 shrink-0 rounded-md bg-white p-1 [&_svg]:h-auto [&_svg]:w-full"
+            dangerouslySetInnerHTML={{ __html: await qrSvg(member.code) }}
+          />
           {member.code}
         </span>
         {member.squad && (
