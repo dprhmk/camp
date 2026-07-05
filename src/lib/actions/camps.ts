@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser, requirePermission } from "@/lib/auth";
+import { requireActiveCamp } from "@/lib/camp";
 import {
   clearActiveCamp,
   getActiveCampId,
@@ -65,4 +66,22 @@ export async function deleteCampAction(campId: string) {
     await clearActiveCamp();
   }
   revalidatePath("/camps");
+}
+
+/**
+ * Reset the active camp to a blank state for repeated testing: delete all
+ * members, squads and schedule entries. Pool codes are kept, so already
+ * printed QR stickers become free again — no reprinting needed.
+ */
+export async function resetCampDataAction() {
+  await requirePermission("camp:manage");
+  const camp = await requireActiveCamp();
+
+  await prisma.$transaction([
+    prisma.member.deleteMany({ where: { campId: camp.id } }),
+    prisma.scheduleEntry.deleteMany({ where: { campId: camp.id } }),
+    prisma.squad.deleteMany({ where: { campId: camp.id } }),
+  ]);
+
+  revalidatePath("/", "layout");
 }

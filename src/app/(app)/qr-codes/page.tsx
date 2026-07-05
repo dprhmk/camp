@@ -6,7 +6,7 @@ import { displayName } from "@/lib/utils";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/feedback";
-import { GenerateCodesForm, PrintButton } from "./qr-codes-client";
+import { GenerateCodesForm, PrintButton, ResetCampDataButton } from "./qr-codes-client";
 
 export default async function QrCodesPage() {
   await requirePermission("codes:manage");
@@ -48,8 +48,11 @@ export default async function QrCodesPage() {
           action={pool.length > 0 ? <PrintButton /> : undefined}
         />
         <Card className="mb-4">
-          <CardContent>
+          <CardContent className="space-y-3">
             <GenerateCodesForm defaultCount={65} />
+            <div className="border-t border-slate-200 pt-3">
+              <ResetCampDataButton />
+            </div>
           </CardContent>
         </Card>
       </div>
