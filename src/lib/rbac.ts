@@ -18,6 +18,7 @@ export type Action =
   | "member:createAny"
   | "member:deleteAny"
   | "generate:run"
+  | "codes:manage" // generate/print the pre-printed QR code pool
   | "schedule:edit"
   | "system";
 
@@ -31,6 +32,7 @@ const ALL_ACTIONS: Action[] = [
   "member:createAny",
   "member:deleteAny",
   "generate:run",
+  "codes:manage",
   "schedule:edit",
   "system",
 ];

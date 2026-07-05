@@ -17,6 +17,7 @@ export default async function AppLayout({
     users: can(user, "user:manage"),
     camps: can(user, "camp:create"),
     schedule: can(user, "schedule:edit"),
+    codes: can(user, "codes:manage"),
   };
 
   return (

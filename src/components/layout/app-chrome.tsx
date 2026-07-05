@@ -14,6 +14,7 @@ import {
   Shuffle,
   Tent,
   UserCog,
+  QrCode,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ROLE_LABEL, type Role } from "@/lib/enums";
 import { logoutAction } from "@/lib/actions/auth";
 
-type Caps = { generate: boolean; users: boolean; camps: boolean; schedule: boolean };
+type Caps = { generate: boolean; users: boolean; camps: boolean; schedule: boolean; codes: boolean };
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
 export function AppChrome({
@@ -48,6 +49,7 @@ export function AppChrome({
   const more: NavItem[] = [
     { href: "/contacts", label: "Контакти", icon: Phone },
     ...(caps.generate ? [{ href: "/generate", label: "Розподіл команд", icon: Shuffle }] : []),
+    ...(caps.codes ? [{ href: "/qr-codes", label: "QR-коди", icon: QrCode }] : []),
     { href: "/camps", label: "Табори", icon: Tent },
     ...(caps.users ? [{ href: "/users", label: "Акаунти", icon: UserCog }] : []),
   ];
@@ -57,7 +59,7 @@ export function AppChrome({
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 md:bg-white">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 md:bg-white print:md:hidden">
         <div className="flex items-center gap-2 px-5 py-4">
           <span className="text-xl">⛺</span>
           <span className="font-bold text-slate-900">Загінецька база</span>
@@ -79,7 +81,7 @@ export function AppChrome({
       {/* Main column */}
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur md:hidden print:hidden">
           <Link href="/camps" className="flex min-w-0 items-center gap-2">
             <span className="text-lg">⛺</span>
             <span className="truncate text-sm font-semibold text-slate-900">
@@ -91,11 +93,11 @@ export function AppChrome({
           </span>
         </header>
 
-        <main className="flex-1 pb-24 md:pb-8">{children}</main>
+        <main className="flex-1 pb-24 md:pb-8 print:pb-0">{children}</main>
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white pb-safe md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-slate-200 bg-white pb-safe md:hidden print:hidden">
         {primary.map((item) => (
           <BottomLink key={item.href} item={item} active={isActive(item.href)} />
         ))}
