@@ -59,13 +59,35 @@ function toData(input: MemberInput) {
 async function uniqueCode(campId: string): Promise<string> {
   for (let i = 0; i < 10; i++) {
     const code = generateCode();
-    const exists = await prisma.member.findUnique({
-      where: { campId_code: { campId, code } },
-    });
-    if (!exists) return code;
+    // Must not clash with existing members OR free pre-printed pool codes —
+    // a clash would silently hijack a printed QR sticker.
+    const [member, pooled] = await Promise.all([
+      prisma.member.findUnique({ where: { campId_code: { campId, code } } }),
+      prisma.poolCode.findUnique({ where: { campId_code: { campId, code } } }),
+    ]);
+    if (!member && !pooled) return code;
   }
   // Extremely unlikely fallback.
   return generateCode(8);
+}
+
+/**
+ * Resolve the code for a new member: a pre-printed pool code passed from the
+ * scan flow (must exist in the pool and be free), or a freshly generated one.
+ */
+async function codeForNewMember(
+  campId: string,
+  requested: string,
+): Promise<{ code: string } | { error: string }> {
+  if (!requested) return { code: await uniqueCode(campId) };
+
+  const [pooled, taken] = await Promise.all([
+    prisma.poolCode.findUnique({ where: { campId_code: { campId, code: requested } } }),
+    prisma.member.findUnique({ where: { campId_code: { campId, code: requested } } }),
+  ]);
+  if (!pooled) return { error: `Код «${requested}» не знайдено серед згенерованих QR-кодів` };
+  if (taken) return { error: `Код «${requested}» вже присвоєно іншому учаснику` };
+  return { code: requested };
 }
 
 /**
@@ -92,9 +114,12 @@ export async function createMemberAction(
   const parsed = memberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
-  const code = await uniqueCode(camp.id);
+  const requestedCode = String(formData.get("code") ?? "").trim().toUpperCase();
+  const resolved = await codeForNewMember(camp.id, requestedCode);
+  if ("error" in resolved) return { ok: false, message: resolved.error };
+
   const member = await prisma.member.create({
-    data: { ...toData(parsed.data), campId: camp.id, code },
+    data: { ...toData(parsed.data), campId: camp.id, code: resolved.code },
   });
 
   // One leader per squad: making this member leader demotes the previous one.

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { Camera, CameraOff, Keyboard, Loader2 } from "lucide-react";
-import { findMemberByCode } from "@/lib/actions/lookup";
+import { resolveCode } from "@/lib/actions/lookup";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -27,11 +27,15 @@ export function Scanner() {
       setResolving(true);
       setLookupError(null);
       try {
-        const found = await findMemberByCode(code);
-        if (found) {
+        const found = await resolveCode(code);
+        if (found.kind === "member") {
           router.push(`/members/${found.id}`);
+        } else if (found.kind === "free") {
+          // Pre-printed code that has no member yet — open the new-member
+          // form with the code locked in.
+          router.push(`/members/new?code=${encodeURIComponent(found.code)}`);
         } else {
-          setLookupError(`Учасника з кодом «${code.toUpperCase()}» не знайдено в цьому таборі`);
+          setLookupError(`Код «${code.toUpperCase()}» не знайдено в цьому таборі`);
           setResolving(false);
         }
       } catch {

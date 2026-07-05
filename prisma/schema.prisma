@@ -55,6 +55,25 @@ model Camp {
   squads         Squad[]
   members        Member[]
   scheduleEntries ScheduleEntry[]
+  poolCodes      PoolCode[]
+}
+
+// ---------------------------------------------------------------------------
+// PoolCode — pre-generated member codes, printed as QR stickers before the
+// camp starts. A pool code is "free" until a Member with the same
+// (campId, code) pair exists; scanning a free code opens the new-member form.
+// ---------------------------------------------------------------------------
+
+model PoolCode {
+  id        String   @id @default(cuid())
+  campId    String
+  code      String
+  createdAt DateTime @default(now())
+
+  camp Camp @relation(fields: [campId], references: [id], onDelete: Cascade)
+
+  @@unique([campId, code])
+  @@index([campId])
 }
 
 // ---------------------------------------------------------------------------

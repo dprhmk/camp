@@ -41,6 +41,7 @@ export function MemberForm({
   squads,
   squadLeaders = {},
   currentMemberId,
+  code,
   submitLabel,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
@@ -48,6 +49,8 @@ export function MemberForm({
   squads: { id: string; name: string }[];
   squadLeaders?: SquadLeaders;
   currentMemberId?: string;
+  /** Pre-printed pool code to assign on create (from the scan flow). */
+  code?: string;
   submitLabel: string;
 }) {
   const [state, formAction] = useActionState(action, initialActionState);
@@ -70,6 +73,7 @@ export function MemberForm({
 
   return (
     <form action={formAction} className="space-y-5 pb-28" noValidate>
+      {code && <input type="hidden" name="code" value={code} />}
       {(state.message || Object.keys(err).length > 0) && (
         <Alert variant="error">
           {state.message ?? "Перевірте виділені поля — деякі заповнено некоректно."}
