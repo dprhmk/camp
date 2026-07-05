@@ -10,12 +10,16 @@ and **Vercel Blob** for member-photo storage. All three are on free tiers.
 | **Database** | Neon Postgres (project on neon.tech) |
 | **Photo storage** | Vercel Blob store `camp-photos` (public) |
 
-Demo accounts (from `prisma/seed.ts`):
+Production account (demo users were removed by `npm run db:prepare`):
 
 | Role | Email | Password |
 |------|-------|----------|
 | Super-admin | `admin@camp.local` | `admin12345` |
-| User | `user1@camp.local` … `user5@camp.local` | `user12345` |
+
+`npm run db:prepare` (⚠️ destructive) resets the database for a real season:
+wipes all camps/squads/members/schedule/pool codes and every non-super-admin
+account, then creates an empty camp with a pool of pre-printed QR codes
+(printable at `/qr-codes`).
 
 ## How it's wired
 
